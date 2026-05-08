@@ -1,0 +1,35 @@
+{
+  "skill_name": "dutify-api",
+  "evals": [
+    {
+      "id": 0,
+      "name": "create-task-python",
+      "prompt": "I want a Python script that uses the Dutify API to create a new task called 'Q4 planning' in the 'Backlog' list (which lives under the 'Marketing' space) of my Dutify workspace 'acme'. Status should be 'To Do', priority 'High', assignee alex@dutify.ai. Read the API key from env var DUTIFY_API_KEY. Make the script production-quality — handle errors gracefully and print the resulting task. Save the script as create_task.py and a short README.md explaining what it does and how to run it.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "list-wiki-pages-curl",
+      "prompt": "Give me a curl command that lists all wiki pages under the 'Engineering' space in my Dutify workspace, using the Dutify API. I'll set my API key in $DUTIFY_API_KEY. Save the curl command as list_pages.sh (with a #!/bin/bash shebang and chmod-friendly content) and a brief explanation.md describing what each part of the URL/headers does and what the response will look like.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "update-fr-status",
+      "prompt": "I have a feature request with short ID FR-42 in the Dutify Feature Requests system. I want to change its status to 'Planned'. Show me the exact HTTP request (method, URL, headers, body) I should send. Save your answer as answer.md — include the full endpoint URL, the JSON body, and a one-line note about what error response I should expect if 'Planned' isn't a valid status name.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "bulk-retype-tasks",
+      "prompt": "In my Dutify workspace 'acme', I want every task in the list 'Triage Inbox' (which lives under the 'Engineering' space) re-typed to 'Bug'. Write a Python script bulk_retype.py that does the whole flow end-to-end: find the workspace's Bug task-type identifier, find all tasks in that list (their stable identifiers, not short keys), then call the bulk change-type endpoint. Read the API key from $DUTIFY_API_KEY. Print processed/skipped counts on success. If the call comes back as 202 (async), poll the status URL until terminal. Save the script plus a short README.md explaining the two-step lookup and why short keys aren't accepted by the bulk endpoint.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "find-untyped-tasks",
+      "prompt": "I want to find every untyped task (tasks with no taskType) across my Dutify workspace 'acme'. Give me a curl command that does this and save it as find_untyped.sh (with #!/bin/bash). API key in $DUTIFY_API_KEY. Also save a short notes.md explaining (1) what 'untyped' means in this system — when a task ends up with taskType=null vs when it inherits a default — and (2) which field on the JSON response I'd filter on to identify the untyped ones if the API itself doesn't expose an isUntyped filter.",
+      "files": []
+    }
+  ]
+}
