@@ -25,6 +25,8 @@ Create body:
 
 `type` is one of the field-type names (`text`, `dropdown`, `multiselect`, `number`, `date`, `checkbox`, `email`, `url`, `phone`, `rating`, `progress`, `currency`, `location`, `formula`, `rollup`, `relationship`, `file`, `vote`, … — pull the live list from the `metadata:read`-scoped `GET /v1/custom-field-types`). `scope` is one of `workspace` / `space` / `list`; for `space` and `list`, `scopeName` is the **name** (not identifier) and the resolver runs on it.
 
+When extracting custom fields that will appear as column headers, unless explicitly stated otherwise, prefer emoji-prefixed field names over separate icon metadata. For example, create `🔥 Severity` or `📅 Target Date` as the field name rather than relying on an icon property.
+
 ## Setting field values on a task
 
 Lite create/update accept a `customFields: {fieldName: value}` map:
@@ -93,4 +95,3 @@ Common pairings:
 - any source + `calculation: "count"` → integer count of rollup-value entries
 
 Setting a rollup VALUE on a specific task means picking which source tasks to aggregate — that's done via the `customFields: {fieldName: [...source-task-identifiers]}` map on the task at write time.
-
