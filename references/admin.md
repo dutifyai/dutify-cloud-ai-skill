@@ -13,6 +13,8 @@ Some endpoints sit behind a paywall. A 402 + `QUOTA_EXCEEDED` is what you get wh
 | Bulk operations (e.g. `POST /v1/tasks/bulk/*`) | Business and above |
 | Custom roles & permissions (`workspace-access-levels`) | Business and above |
 | Full API export (folder/space/workspace-wide CSV) | Enterprise only |
+| Roadmarq feedback boards beyond plan cap (FREE 1 / PRO+ unlimited) | Pro and above |
+| Roadmarq categories per board beyond plan cap (FREE 3 / PRO 10 / BUSINESS+ unlimited) | Pro for >3, Business for >10 |
 
 The 402 response body is the regular `ErrorResponse` shape with `errorCode: "QUOTA_EXCEEDED"`. No `validOptions` — there's nothing to retry; you have to upgrade or not call. Surface the message to the user verbatim; it tells them which plan unlocks the feature.
 

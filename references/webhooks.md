@@ -95,6 +95,8 @@ Each entry from the `/v1/activity-log/...` endpoints is an `ActivityLogDTO`:
 
 **Watch out:** the `data` field is a **JSON-encoded string**, not a nested object. To use it programmatically you have to `JSON.parse(entry.data)` after receiving the response. The shape inside `data` varies by `activityType` — there's no single schema; consult the catalog or just inspect by activity type.
 
+**Automation-triggered events.** When an automation rule causes a side-effect (e.g. SET_STATUS changes a status), the resulting activity entry has `userIdentifier: null` (no human actor) and the parsed `data` carries `"triggeredByAutomation": true` plus `"automationName": "<rule name>"`. Don't fall back to the task creator as the actor when `userIdentifier` is null — render the automation as the actor instead.
+
 Endpoints:
 
 ```http

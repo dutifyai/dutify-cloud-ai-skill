@@ -80,7 +80,7 @@ Rollup is the sibling of formula — it pulls values from a different list and a
 ```
 
 - `sourceListIdentifier` (required) — the list whose tasks supply the source values. Pick tasks from this list as rollup-value entries on the rollup-field-bearing task.
-- **One** of: `rollupFieldIdentifier` (a custom field on the source list) **or** `rollupTaskField` (a native task field — `dueDate`, `createdAt`, `updatedAt`, `estimatedTime`, `timeSpent`).
+- **One** of: `rollupFieldIdentifier` (a custom field **available** on the source list — defined on the list itself OR inherited from its folder chain / space / workspace; the validator walks the list's hierarchy) **or** `rollupTaskField` (a native task field — `dueDate`, `createdAt`, `updatedAt`, `estimatedTime`, `timeSpent`).
 - `calculation` — exactly one of: `none` | `sum` | `average` | `earliest_date` | `latest_date` | `range` | `count`. The regex validates this — anything else 400s.
 - `targetType` is set by the backend (don't bother sending it on writes). Determined from `calculation` × source field type.
 
