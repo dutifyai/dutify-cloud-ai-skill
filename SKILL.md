@@ -31,6 +31,7 @@ This SKILL.md covers the orientation. Each focused reference below is loaded on 
 | [roadmarq.md](references/roadmarq.md) | Feature requests + bugs, per-board short-ID prefixes, lite verbs (`/votes` not `/vote`, `/moderation` not `/moderate`), `?workspaceIdentifier=` query rule |
 | [webhooks.md](references/webhooks.md) | Subscriptions, payload envelope, `X-Webhook-Signature-256`, retry schedule, WebSocket ticket flow, activity log read shape |
 | [custom-fields.md](references/custom-fields.md) | Custom-field CRUD (lite), value-setting on tasks, formula configuration (structured JSON), rollup configuration (sourceList + aggregator) |
+| [views.md](references/views.md) | Views (Lite): create/list/get/update/clone, column visibility/order, filters, MCP create behavior |
 | [dashboards-forms.md](references/dashboards-forms.md) | `/v1/dashboard/lite`, form admin (config + submissions + CSV export), public form submission |
 | [sprints.md](references/sprints.md) | Sprint groups, sprint lifecycle (start/complete/rollover), membership, burndown — non-lite |
 | [imports.md](references/imports.md) | CSV import: preview → confirm flow, one-shot upload, polling job status |

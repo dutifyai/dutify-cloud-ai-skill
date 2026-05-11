@@ -26,14 +26,14 @@ After install:
 
 ```bash
 ls ~/.claude/skills/dutify-api/SKILL.md          # should exist
-ls ~/.claude/skills/dutify-api/references/       # 15 topic files
+ls ~/.claude/skills/dutify-api/references/       # 16 topic files
 ```
 
 Then in any Claude Code session, ask "what's the URL for the Dutify task-type catalogue endpoint?" — Claude should pick up the skill, load `references/task-types.md`, and answer.
 
 ## How the skill is laid out
 
-The skill is **topic-indexed** rather than a single big document. `SKILL.md` is the orientation file an LLM always sees; the 15 reference files in `references/` are loaded on-demand based on the topic map.
+The skill is **topic-indexed** rather than a single big document. `SKILL.md` is the orientation file an LLM always sees; the 16 reference files in `references/` are loaded on-demand based on the topic map.
 
 | File | Topic |
 |---|---|
@@ -46,6 +46,7 @@ The skill is **topic-indexed** rather than a single big document. `SKILL.md` is 
 | `references/roadmarq.md` | Feature requests + bugs, per-board short-ID prefixes, lite verbs (`/votes` not `/vote`, `/moderation` not `/moderate`), `?workspaceIdentifier=` query rule |
 | `references/webhooks.md` | Subscriptions, payload envelope, `X-Webhook-Signature-256`, retry schedule, WebSocket ticket flow, activity log read shape |
 | `references/custom-fields.md` | Custom-field CRUD (lite), value-setting on tasks, formula configuration (structured JSON), rollup configuration |
+| `references/views.md` | Views (Lite): create/list/get/update/clone, column visibility/order, filters, MCP create behavior |
 | `references/dashboards-forms.md` | `/v1/dashboard/lite`, form admin (config + submissions + CSV export), public form submission |
 | `references/sprints.md` | Sprint groups, sprint lifecycle (start/complete/rollover), membership, burndown — non-lite |
 | `references/imports.md` | CSV import: preview → confirm flow, one-shot upload, polling job status |
