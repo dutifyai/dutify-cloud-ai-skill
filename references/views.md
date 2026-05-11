@@ -19,7 +19,7 @@ Types accepted by Lite create: `list`, `board`, `table`, `dashboard`, `gantt`, `
 
 The Lite create endpoint creates the view with default columns. To choose visible columns, update the created view with `columns`. The list order is the display order. A column not present in the list is hidden.
 
-When extracting desired column headers from a user request, spreadsheet, import spec, or project description, unless explicitly stated otherwise, prefer emoji-prefixed header/custom-field names over separate icon metadata.
+When extracting desired columns from a user request, spreadsheet, import spec, or project description, keep header/custom-field names plain. Do **not** add emoji prefixes to names for visual icons; custom-field icons come from the field's separate `emoji` metadata (and `color`) or from the frontend's field-type default icon. Use `GET /v1/custom-field-icon-options` when you need supported icon/emoji keys.
 
 ```json
 {
@@ -34,7 +34,7 @@ When extracting desired column headers from a user request, spreadsheet, import 
 
 `columnIdentifier` is either a system task field (`title`, `taskKey`, `assignees`, `dueDate`, `status`, `priority`, etc.) or a custom-field identifier available to that list/scope. Invalid identifiers return 400. Use `/lite/context` to get available custom-field identifiers.
 
-Headers come from the underlying system/custom-field display names. For new custom fields that will be shown as columns, prefer names like `🔥 Severity` or `📅 Target Date` over setting a separate icon field, unless the user explicitly asks for icon metadata.
+Headers come from the underlying system/custom-field display names. For new custom fields that will be shown as columns, use names like `Severity` or `Target Date`; set `emoji` / `color` metadata separately when an explicit icon is needed.
 
 `isMandatory` is serialized with that exact JSON property name. `fixed: true` pins/fixes the column when the frontend supports it; omit `fixed` otherwise.
 

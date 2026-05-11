@@ -6,7 +6,7 @@ In addition to setting custom-field VALUES on tasks (the `customFields` map on `
 
 ```http
 POST   https://dutify.ai/mp/api/v1/custom-fields/lite                # create
-PATCH  https://dutify.ai/mp/api/v1/custom-fields/lite/{identifier}   # rename / re-option
+PUT    https://dutify.ai/mp/api/v1/custom-fields/lite/{identifier}   # rename / visual metadata
 DELETE https://dutify.ai/mp/api/v1/custom-fields/lite/{identifier}   # remove (cascades the field's values)
 ```
 
@@ -17,15 +17,19 @@ Create body:
   "workspace": "ws_abc",
   "name": "Severity",
   "type": "dropdown",
+  "emoji": "Flag",
+  "color": "#FF0000",
   "scope": "list",            // one of: "workspace", "space", "list"
   "scopeName": "Bug List E2E", // ignored when scope=workspace; space NAME or list NAME otherwise
-  "options": [{"name": "P1"}, {"name": "P2"}]
+  "options": [{"value": "P1"}, {"value": "P2"}]
 }
 ```
 
 `type` is one of the field-type names (`text`, `dropdown`, `multiselect`, `number`, `date`, `checkbox`, `email`, `url`, `phone`, `rating`, `progress`, `currency`, `location`, `formula`, `rollup`, `relationship`, `file`, `vote`, … — pull the live list from the `metadata:read`-scoped `GET /v1/custom-field-types`). `scope` is one of `workspace` / `space` / `list`; for `space` and `list`, `scopeName` is the **name** (not identifier) and the resolver runs on it.
 
-When extracting custom fields that will appear as column headers, unless explicitly stated otherwise, prefer emoji-prefixed field names over separate icon metadata. For example, create `🔥 Severity` or `📅 Target Date` as the field name rather than relying on an icon property.
+Keep custom-field names as plain display labels (`Severity`, `Target Date`). Do **not** prefix names with emoji for column/header icons. Field icons are separate metadata: Lite/rich custom-field create/update accepts `emoji` and `color`.
+
+For icon selection, query `GET /v1/custom-field-icon-options` for the valid keys. As agent behavior, prefer a semantically matching `emojiNames` value when one exists; use `iconNames` for structural/type affordances when no emoji name is a better fit. Examples: severity/urgency → `fire`, target/goal → `direct_hit`, launch → `rocket`, approval/success → `white_check_mark`, location → `pushpin`, budget → `moneybag`, while a date field may reasonably use the icon key `CalendarBlank`. If `emoji` is unset, the frontend uses `defaultIconsByFieldType`.
 
 ## Setting field values on a task
 

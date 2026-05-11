@@ -84,7 +84,7 @@ The complete scope vocabulary (from `ApiKeyScope` enum):
 | Activity log | `activity_log:read` | (no write) |
 | Users | `users:read` | (no write) |
 | Imports | (no read) | `imports:write` |
-| Lookup tables (`status-types`, `access-levels`, …) | `metadata:read` | (no write) |
+| Lookup tables (`custom-field-types`, `custom-field-icon-options`, `status-types`, `access-levels`, …) | `metadata:read` | (no write) |
 | Wiki pages | `wiki:pages:read` | `wiki:pages:write` |
 | Wiki spaces | `wiki:spaces:read` | `wiki:spaces:write` |
 | Wiki comments | `wiki:comments:read` | `wiki:comments:write` |

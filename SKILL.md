@@ -95,6 +95,21 @@ When matching fails, the error body includes `validOptions` — see [errors.md](
 
 Non-lite tags (e.g. plain `Tasks`) require identifiers everywhere and are mostly for the Dutify frontends. Prefer `(Lite)` unless the user specifically needs UUID-level control.
 
+## Structure creation defaults
+
+When creating a task list via `POST /v1/lists/lite`, prefer setting `icon` and `color` at creation time whenever the list's purpose is known. These are separate visual metadata fields; do not put emoji/icon text into the list name. For `icon`, prefer a semantic emoji name first (`rocket`, `fire`, `direct_hit`, `white_check_mark`, `pushpin`, `moneybag`) and use an icon identifier only when no emoji fits the list's meaning.
+
+```json
+{
+  "workspace": "ws_abc",
+  "space": "Engineering",
+  "folder": "Q2 Roadmap",
+  "name": "Launch Tasks",
+  "icon": "rocket",
+  "color": "#4A90D9"
+}
+```
+
 ## Pagination
 
 Lite list/search endpoints use cursor pagination only — `limit` (default 50, max **200** for `/v1/tasks/lite/search`; defaults vary slightly per endpoint, the catalog `parameters` block has the authoritative numbers) plus an opaque `cursor`. The response wrapper is `LitePageResponse` with shape `{items: [...], nextCursor: "..."}`. There is **no** `total` count and no `offset` — paginate by passing back the previous response's `nextCursor` until it comes back `null`.
