@@ -21,7 +21,7 @@ The user is asking to do something against a Dutify workspace. Typical signals:
 
 **This is not optional.** Each reference file below documents non-obvious wire shapes, validator quirks, and footguns that have already broken real callers. SKILL.md is orientation — it does **not** restate what's in the references. Before you write code that hits an endpoint, **open the matching reference and read the relevant section in full.** Skimming the table is not reading the reference.
 
-Rule of thumb: if you're about to construct a request body, set custom-field metadata, choose a `columnIdentifier`, format a date, or pick a label value — **stop and load the reference first.** The footguns are specifically the things you'd guess wrong from training data: labels accept identifiers OR display values (not arbitrary strings); dates need ISO 8601 (PG `timestamptz::text` doesn't qualify); column identifiers in views are `cf_<id>`, not display names; custom-field icons come from `emoji` metadata, not from emoji prefixes in the name.
+Rule of thumb: if you're about to construct a request body, set custom-field metadata, choose a `columnIdentifier`, format a date, or pick a label value — **stop and load the reference first.** The footguns are specifically the things you'd guess wrong from training data: labels accept identifiers OR display values (not arbitrary strings); dates need ISO 8601 (PG `timestamptz::text` doesn't qualify); view custom-field references (`groupBy`, `sortBy`, `columnIdentifier`) take the **raw** custom-field identifier (`AHs6MtrAIq`), NOT `cf_<id>` and not the display name; custom-field icons come from `emoji` metadata, not from emoji prefixes in the name.
 
 | Reference | **Must read before** |
 |---|---|
@@ -33,7 +33,7 @@ Rule of thumb: if you're about to construct a request body, set custom-field met
 | [roadmarq.md](references/roadmarq.md) | Feature requests + bugs — short-ID prefixes, lite verbs (`/votes` not `/vote`), `?workspaceIdentifier=` rule |
 | [webhooks.md](references/webhooks.md) | Subscriptions, payload envelope, signature verification, retry schedule, WebSocket ticket flow |
 | [custom-fields.md](references/custom-fields.md) | **MANDATORY for any custom-field work.** Per-type value shapes (labels, dropdown, date, money, file, …), `emoji`/`color` metadata, formula + rollup configs. Skipping this is the #1 cause of silent validation failures and ugly default-icon UI. |
-| [views.md](references/views.md) | **MANDATORY for any view work.** `groupBy`/`sortBy` take column identifiers (`cf_<id>`), not display names. POST creates the view with defaults; columns/filters are a separate PUT. |
+| [views.md](references/views.md) | **MANDATORY for any view work.** POST accepts `columns` + `filters` atomically with the create. For custom-field references in `groupBy` / `sortBy` / `columns[].columnIdentifier`, use the **raw** custom-field id (`AHs6MtrAIq`) — NOT `cf_<id>`. `columnIdentifier` 400s on `cf_` prefix; `groupBy`/`sortBy` silently accept it but the frontend won't render the grouping. |
 | [dashboards-forms.md](references/dashboards-forms.md) | `/v1/dashboard/lite`, form admin (config + submissions + CSV export), public form submission |
 | [sprints.md](references/sprints.md) | Sprint groups, sprint lifecycle, membership, burndown — non-lite endpoint shapes |
 | [imports.md](references/imports.md) | CSV import: preview → confirm flow, polling job status |
@@ -52,7 +52,7 @@ Walk this before you start typing the request body. If you can't answer one, the
 2. **Identifiers vs names** — which fields take which? Lite is *enum-ish + people use names; structural references stay as identifiers.* ([SKILL.md "What lite endpoints actually accept"](#what-lite-endpoints-actually-accept))
 3. **Per-type value shapes** — for custom-field values, look up the type in [custom-fields.md](references/custom-fields.md). Date → ISO 8601 (not `2026-05-08 00:00:00+00`). Labels → option display value OR identifier. Money → number or `{amount, currency}`. File/people/task have their own shapes.
 4. **Visual metadata** — for any list, custom-field, or workspace structure you create, set `icon`/`emoji` + `color` at creation time. Skipping them is what produces the "everything is a gray circle" UI. ([SKILL.md "Structure creation defaults"](#structure-creation-defaults))
-5. **View columns** — `groupBy`/`sortBy`/`columnIdentifier` take system field names (`status`, `priority`, `dueDate`) or `cf_<custom-field-identifier>`. **Never** display names. Use `/lite/context` to resolve identifiers. ([views.md](references/views.md))
+5. **View columns** — `groupBy` / `sortBy` / `columns[].columnIdentifier` all take system field names (`status`, `priority`, `dueDate`, …) or the **raw** custom-field identifier (`AHs6MtrAIq`). **Never** `cf_<id>` and never display names. `columnIdentifier` rejects `cf_<id>` with 400; `groupBy`/`sortBy` silently accept it and then the frontend can't resolve it, so grouping/sorting fails to render. Use `/lite/context` to resolve raw ids. ([views.md](references/views.md))
 6. **Idempotency** — for create endpoints clients may retry, send `Idempotency-Key`. ([tasks.md](references/tasks.md))
 
 ## Core idea: discover, then call
