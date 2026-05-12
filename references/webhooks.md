@@ -22,6 +22,7 @@ Subscription body:
 ```json
 {
   "url": "https://yourapp.example.com/dutify-webhook",
+  "secret": "<32+ random hex bytes, generated client-side>",  // REQUIRED, non-blank, ≤500 chars
   "name": "task lifecycle into Slack relay",
   "eventTypes": ["task-created", "task-deleted", "task-status-changed", "comment-added"],
   "scopeType": "TASK",            // optional: SPACE | FOLDER | TASK_LIST | TASK — narrows the events to one entity
@@ -31,7 +32,13 @@ Subscription body:
 
 `eventTypes` is an array of dash-cased event addresses (matching `EventAddress` enum). There are 130+ events; common ones include `task-created`, `task-deleted`, `task-status-changed`, `task-priority-changed`, `task-assignee-added`, `task-assignee-removed`, `task-due-date-updated`, `task-start-date-updated`, `comment-added`, `comment-updated`, `comment-deleted`, `reaction-added`, `custom-field-value-updated`, `status-created`, `priority-created`, `space-deleted`, `folder-deleted`, `task-list-deleted`, `workspace-user-role-changed`. Pull the full list from the catalog's Webhooks tag detail.
 
-The create response includes a one-time `secret` (HMAC key). Save it — subsequent reads do not return the secret.
+### The `secret` is your input, not the server's output
+
+`secret` is a **required input** on `POST` — `@NotBlank @Size(max = 500)`. Generate it yourself client-side before the call (e.g. 32+ bytes of crypto-random hex from `crypto.randomBytes(32).toString('hex')` in Node, `secrets.token_hex(32)` in Python). The server stores it and uses it to sign outgoing deliveries' `X-Webhook-Signature-256` header.
+
+`WebhookSubscriptionDTO` (the response on create and on every read) does **not** include `secret` — there's no field for it. So the practical rule is: **keep your own copy at generation time**, because the server will never echo it back.
+
+Rotation: `PUT /v1/workspaces/{ws}/webhooks/{webhookIdentifier}` accepts an optional `secret` field; if you supply a new value, it replaces the stored one. There is no dedicated "regenerate secret" endpoint — rotation is just a PUT with a new client-generated value.
 
 ## Outgoing webhook payload — what your endpoint receives
 
