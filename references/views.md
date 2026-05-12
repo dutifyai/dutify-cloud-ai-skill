@@ -93,3 +93,17 @@ When extracting desired columns from a user request, spreadsheet, import spec, o
 `filters` is a `List<FilterGroupDTO>` — each group has its own conditions and a `precedingLogic` (`AND` / `OR`) for how it combines with the previous group. See the catalog tag detail for the full `FilterGroupDTO` schema. Invalid `columnIdentifier` entries on a PUT 400 the call, same as on POST.
 
 Lite `GET` / list responses are intentionally flat and do not include `data.columnOrder` / `data.filterGroups`. If you need to confirm column or filter state after a write, use the rich resource-view endpoint (`GET /v1/resource-views/lists/{viewId}` for list-scoped views, and so on per scope).
+
+## Deleting a view
+
+`DELETE /v1/views/lite/{identifier}` removes a view. Requires EDIT on the view (same as PUT).
+
+When a list/folder/space/workspace is created, the backend auto-seeds one **mandatory** view (`isMandatory: true`, name "List", type `list`) so the parent always has something to render. The old rule was "mandatory views can never be deleted" — that has been **relaxed**:
+
+- **Mandatory view, ≥ 1 other view exists at the same parent** → `204 No Content`. The seed is deletable as long as it's not the last view standing.
+- **Mandatory view, no siblings** → `409 Conflict` with `errorCode: "OPERATION_NOT_ALLOWED"` and a message indicating the last view cannot be deleted. The view stays. To actually replace the seed, POST your own view first, then DELETE the seed.
+- **Non-mandatory view** → `204 No Content`, unchanged. (The count guard only kicks in for the mandatory marker; in practice every parent has exactly one mandatory view, so the "last view" check effectively prevents zeroing out the parent.)
+- View not found → `404`.
+- Missing EDIT → `403`.
+
+This means the typical "I want my custom board as the only view" flow is: POST your board, DELETE the seed `List`. The first DELETE attempt before POSTing the replacement will 409 — that's the guard working.
