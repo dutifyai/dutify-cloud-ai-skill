@@ -95,6 +95,8 @@ When matching fails, the error body includes `validOptions` — see [errors.md](
 
 Non-lite tags (e.g. plain `Tasks`) require identifiers everywhere and are mostly for the Dutify frontends. Prefer `(Lite)` unless the user specifically needs UUID-level control.
 
+**Lite and non-lite write paths converge.** For task writes, the lite endpoint resolves names → identifiers and then forwards the request to the same underlying service the non-lite endpoint uses (`LiteTaskRequestMapper` → `ReferenceResolver.resolveCustomFields` → rich path). Per-type value validation (handlers in `service/customfield/handler/`) runs once, after convergence. So a `customFields` value shape that works in lite works identically in non-lite, and vice versa. Choose the surface based on what your caller has on hand (names vs. UUIDs), not based on which "features" you think each supports — they support the same writes.
+
 ## Structure creation defaults
 
 When creating a task list via `POST /v1/lists/lite`, prefer setting `icon` and `color` at creation time whenever the list's purpose is known. These are separate visual metadata fields; do not put emoji/icon text into the list name. For `icon`, prefer a semantic emoji name first (`rocket`, `fire`, `direct_hit`, `white_check_mark`, `pushpin`, `moneybag`) and use an icon identifier only when no emoji fits the list's meaning.

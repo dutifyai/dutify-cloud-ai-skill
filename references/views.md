@@ -45,6 +45,10 @@ For a fully customized view over HTTP, do two calls:
 1. `POST /v1/views/lite` with `scope`, `scopeIdentifier`, `name`, `type`, and optional `groupBy` / `sortBy` / `sortDirection`.
 2. `PUT /v1/views/lite/{identifier}` with `columns` and/or `filters`.
 
+`groupBy` and `sortBy` take **column identifiers**, same set as `columnIdentifier` above (system field name like `title`, `status`, `priority`, `dueDate`, or `cf_xxx` for a custom field — resolvable via `/lite/context`). Display names return 400; the call does not silently fall back, so don't swallow the create response (`.catch(() => null)` will hide a real validation error). `sortDirection` is `"asc"` or `"desc"`.
+
+On `PUT /v1/views/lite/{identifier}`, every field is independently optional — `null` (or absent) means **no change**. When `columns` is provided, the list **fully replaces** the current column order (entries must reference valid column identifiers or the call 400s). When `filters` is provided, the list **fully replaces** the current filters; an empty array `[]` clears them all. `filters` is a `List<FilterGroupDTO>` — each group has its own conditions and a `precedingLogic` (`AND`/`OR`) for how it combines with the previous group; see the catalog tag detail for the full `FilterGroupDTO` schema. The same merge-vs-replace rule applies to `groupBy`/`sortBy`: an empty string (not `null`) clears the setting.
+
 Lite `GET` / list responses are intentionally flat and do not include `data.columnOrder`, so verify detailed column state through the rich resource-view endpoint if needed.
 
 ## MCP flow

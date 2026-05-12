@@ -25,7 +25,7 @@ Create body:
 }
 ```
 
-`type` is one of the field-type names (`text`, `dropdown`, `multiselect`, `number`, `date`, `checkbox`, `email`, `url`, `phone`, `rating`, `progress`, `currency`, `location`, `formula`, `rollup`, `relationship`, `file`, `vote`, … — pull the live list from the `metadata:read`-scoped `GET /v1/custom-field-types`). `scope` is one of `workspace` / `space` / `list`; for `space` and `list`, `scopeName` is the **name** (not identifier) and the resolver runs on it.
+`type` is one of the canonical field-type **identifiers** from `CustomFieldTypeEnum`: `text`, `text_area`, `number`, `money`, `rating`, `progress_bar`, `date`, `checkbox`, `dropdown`, `labels`, `email`, `phone`, `website`, `location`, `file`, `people`, `task`, `relationship`, `math_formula`, `rollup`, `voting`, `multivote`, `comment`. Note the spelling — common mistakes: `formula` (use `math_formula`), `progress` (use `progress_bar`), `currency` (use `money`), `vote` (use `voting`), `url` (use `website`), `multiselect` (does not exist — use `labels` for tag-style multi-select). Pull the live list from the `metadata:read`-scoped `GET /v1/custom-field-types` to stay in sync as types are added. `scope` is one of `workspace` / `space` / `list`; for `space` and `list`, `scopeName` is the **name** (not identifier) and the resolver runs on it.
 
 Keep custom-field names as plain display labels (`Severity`, `Target Date`). Do **not** prefix names with emoji for column/header icons. Field icons are separate metadata: Lite/rich custom-field create/update accepts `emoji` and `color`.
 
@@ -47,7 +47,21 @@ POST https://dutify.ai/mp/api/v1/tasks/lite
 }
 ```
 
-Field name → identifier resolution runs against the list's *effective* set (list + folder + space + workspace inheritance, filtered by your access). Values are passed through to the per-type validator unchanged — pass option name strings for dropdowns, numbers for numeric fields, ISO dates for date fields, etc. For file-type custom fields, see the Tasks reference (`tasks.md`) on file uploads.
+Field name → identifier resolution runs against the list's *effective* set (list + folder + space + workspace inheritance, filtered by your access). Values are passed through to the per-type validator unchanged — pass option name strings for dropdowns, numbers for numeric fields, ISO dates for date fields, etc.
+
+The non-obvious value shapes (the ones agents tend to guess wrong):
+
+- **`labels`** — array of strings (e.g. `"Matched Products": ["Dutify", "Voxor"]`). New labels are auto-created when not predefined; `[]` clears all. Distinct from the top-level `tags: [...]` field on `POST /v1/tasks/lite` — `tags` are workspace-wide; `labels` is a list/space/workspace-scoped custom field inside `customFields`. Setting `tags` does **not** populate a `Labels` column.
+- **`dropdown`** — string that matches an option's `value` (display name) **or** its `identifier`. Either works.
+- **`checkbox`** — boolean, or a lenient string (`"true"`/`"false"`/`"yes"`/`"no"`/`"1"`/`"0"`/`"on"`/`"off"`/`"checked"`/`"unchecked"`, case-insensitive), or a number (`0` = false, non-zero = true).
+- **`date`** — ISO 8601 string, a Unix timestamp number (the handler auto-detects: `≤ 1e12` is treated as seconds, `> 1e12` as milliseconds), or a structured object `{dateTime, includeTime?, timeZone?}`.
+- **`money`** — plain number or numeric string (defaults to USD), or a structured object `{amount, currency?}` where `currency` is a 3-letter ISO code (uppercased server-side).
+- **`email`, `phone`, `website`, `location`** — each accepts a plain string (the most-important field — email address, phone number, URL, address respectively) **or** a structured object with extra fields. Read the catalog's request schema for the object form when you need it (`{email, displayName, verified}` for `email`; `{number, countryCode, extension}` for `phone`; `{url, title, description}` for `website`; `{address, city, state, country, zipCode, latitude, longitude}` for `location` with the constraint that `latitude` and `longitude` are paired and must both be set or both omitted).
+- **`people`, `task`** — single identifier string **or** an array of identifier strings. `people` identifiers must resolve to workspace members.
+- **`rollup`** — array of source-task identifier strings (the common case), a single string id, or a full `RollupValueDTO` object. The aggregation is computed server-side from the field's `RollupConfigurationDTO`; you only pick which source tasks contribute.
+- **`math_formula`** — server-computed from the formula config; values posted via `customFields` are effectively ignored at compute time. Treat as read-only.
+
+For file-type custom fields, see the Tasks reference (`tasks.md`) on file uploads.
 
 ## Formula fields are structured JSON, not strings
 
@@ -99,3 +113,12 @@ Common pairings:
 - any source + `calculation: "count"` → integer count of rollup-value entries
 
 Setting a rollup VALUE on a specific task means picking which source tasks to aggregate — that's done via the `customFields: {fieldName: [...source-task-identifiers]}` map on the task at write time.
+
+## Dedicated endpoints for specific types
+
+The `customFields` map is the normal write surface for all settable types. A few types have additional dedicated endpoints for richer operations:
+
+- **`file` content upload:** `POST /v1/tasks/{taskIdentifier}/custom-field-value/{customFieldValueIdentifier}/files` (multipart with `file`, `fileName`, `fileSize`). Per-plan size caps enforced server-side. Requires EDIT access on the task. See `tasks.md` for the full file-upload pattern.
+- **`voting` / `multivote` vote casting:** `POST` and `DELETE /v1/tasks/{taskIdentifier}/custom-field/{customFieldIdentifier}/votes`. Auto-creates the CFV record if needed. Requires COMMENT access. Setting a string via the `customFields` map does **not** cast a vote — it just stores a string value.
+
+The `relationship` custom-field **type** is distinct from task-to-task **relationships**. Task-to-task links between tasks (with a typed `RelationshipType`) live at `POST /v1/tasks/lite/{ref}/relationships` — that's a different feature, not a custom-field value.
