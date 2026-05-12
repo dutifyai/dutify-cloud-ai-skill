@@ -29,7 +29,55 @@ Create body:
 
 Keep custom-field names as plain display labels (`Severity`, `Target Date`). Do **not** prefix names with emoji for column/header icons. Field icons are separate metadata: Lite/rich custom-field create/update accepts `emoji` and `color`.
 
-For icon selection, query `GET /v1/custom-field-icon-options` for the valid keys. As agent behavior, prefer a semantically matching `emojiNames` value when one exists; use `iconNames` for structural/type affordances when no emoji name is a better fit. Examples: severity/urgency → `fire`, target/goal → `direct_hit`, launch → `rocket`, approval/success → `white_check_mark`, location → `pushpin`, budget → `moneybag`, while a date field may reasonably use the icon key `CalendarBlank`. If `emoji` is unset, the frontend uses `defaultIconsByFieldType`.
+> ⚠ **Set `emoji` + `color` at creation time, every time.** If you omit them, the frontend falls back to `defaultIconsByFieldType`, which renders as a generic gray circle for most types — agents repeatedly create 10+ fields without these and end up with a wall of identical circles. Pick a semantic icon while you already have the field's purpose in hand; it's much harder to backfill later.
+
+### Picking the `emoji` value
+
+**Always prefer an emoji name over a structural icon name.** Emojis (🔥, 🚀, 💰, 📌, 🎯) communicate the field's meaning at a glance; structural icons (`Hash`, `Stack`, `FlowArrow`) look abstract and tend to blend together visually. Reach for an icon name **only** when nothing in the emoji list semantically matches the field's purpose.
+
+Get the live list of valid keys from `GET /v1/custom-field-icon-options` — it's `@PermitAll` so no API key or workspace binding required:
+
+```http
+GET https://dutify.ai/mp/api/v1/custom-field-icon-options
+```
+
+Response (`CustomFieldIconOptionsDTO`):
+
+```json
+{
+  "emojiNames":  ["rocket", "fire", "direct_hit", "white_check_mark", "moneybag",
+                  "pushpin", "tada", "bulb", "warning", "lock", "..." ],   // ~120 entries
+  "iconNames":   ["CalendarBlank", "Hash", "Star", "Wallet", "TagSimple",
+                  "FlowArrow", "Stack", "Bug", "Bell", "..." ],            // ~125 entries
+  "defaultIconsByFieldType": {
+    "dropdown": "CaretCircleDown",
+    "labels":   "TagSimple",
+    "date":     "CalendarBlank",
+    "number":   "Hash",
+    "money":    "Wallet",
+    "people":   "UsersThree",
+    "...":      "..."
+  }
+}
+```
+
+`emojiNames` / `iconNames` are flat string lists (same set as the in-app picker — see `dutify-pm-frontend/src/components/shared/emoji-picker/emojiPicker.data.tsx`). `defaultIconsByFieldType` is the fallback when you leave `emoji` unset — that's where the gray-circle wall comes from. Pass the exact key string back as the `emoji` field on create/update.
+
+Common mappings to commit to memory:
+
+| Field purpose | Use |
+|---|---|
+| Severity / urgency / risk | `fire` |
+| Target / goal / objective | `direct_hit` |
+| Launch / release / shipped | `rocket` |
+| Approval / done / success | `white_check_mark` |
+| Money / budget / cost | `moneybag` |
+| Location / address | `pushpin` |
+| Date / deadline | `CalendarBlank` (icon — no good emoji match) |
+| Idea / suggestion | `bulb` |
+| Bug / issue | `Bug` (icon) |
+| Warning / blocker | `warning` |
+| Celebration / milestone | `tada` |
 
 ## Setting field values on a task
 
@@ -51,10 +99,10 @@ Field name → identifier resolution runs against the list's *effective* set (li
 
 The non-obvious value shapes (the ones agents tend to guess wrong):
 
-- **`labels`** — array of strings (e.g. `"Matched Products": ["Dutify", "Voxor"]`). New labels are auto-created when not predefined; `[]` clears all. Distinct from the top-level `tags: [...]` field on `POST /v1/tasks/lite` — `tags` are workspace-wide; `labels` is a list/space/workspace-scoped custom field inside `customFields`. Setting `tags` does **not** populate a `Labels` column.
+- **`labels`** — array of strings (e.g. `"Matched Products": ["Dutify", "Voxor"]`). For a field that **has** predefined options, each string must match an option's `value` (display name) **or** its `identifier` — same lookup rule as `dropdown`. For a field that has **no** predefined options, new labels are auto-created. `[]` clears all. Distinct from the top-level `tags: [...]` field on `POST /v1/tasks/lite` — `tags` are workspace-wide; `labels` is a list/space/workspace-scoped custom field inside `customFields`. Setting `tags` does **not** populate a `Labels` column.
 - **`dropdown`** — string that matches an option's `value` (display name) **or** its `identifier`. Either works.
 - **`checkbox`** — boolean, or a lenient string (`"true"`/`"false"`/`"yes"`/`"no"`/`"1"`/`"0"`/`"on"`/`"off"`/`"checked"`/`"unchecked"`, case-insensitive), or a number (`0` = false, non-zero = true).
-- **`date`** — ISO 8601 string, a Unix timestamp number (the handler auto-detects: `≤ 1e12` is treated as seconds, `> 1e12` as milliseconds), or a structured object `{dateTime, includeTime?, timeZone?}`.
+- **`date`** — ISO 8601 string (`2026-05-08T00:00:00Z` or `2026-05-08`), a Unix timestamp number (the handler auto-detects: `≤ 1e12` is treated as seconds, `> 1e12` as milliseconds), or a structured object `{dateTime, includeTime?, timeZone?}`. **Footgun:** Postgres `timestamptz::text` renders as `2026-05-08 00:00:00+00` (space separator, `+00` offset) — that is **not** valid ISO 8601 and the handler will reject it. Cast explicitly: `to_char(col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`, or use `extract(epoch from col)` for the Unix-timestamp form. Same caveat for any source that defaults to a non-ISO date string.
 - **`money`** — plain number or numeric string (defaults to USD), or a structured object `{amount, currency?}` where `currency` is a 3-letter ISO code (uppercased server-side).
 - **`email`, `phone`, `website`, `location`** — each accepts a plain string (the most-important field — email address, phone number, URL, address respectively) **or** a structured object with extra fields. Read the catalog's request schema for the object form when you need it (`{email, displayName, verified}` for `email`; `{number, countryCode, extension}` for `phone`; `{url, title, description}` for `website`; `{address, city, state, country, zipCode, latitude, longitude}` for `location` with the constraint that `latitude` and `longitude` are paired and must both be set or both omitted).
 - **`people`, `task`** — single identifier string **or** an array of identifier strings. `people` identifiers must resolve to workspace members.

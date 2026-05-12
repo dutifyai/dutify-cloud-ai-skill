@@ -17,30 +17,43 @@ The user is asking to do something against a Dutify workspace. Typical signals:
 - "bump the priority of PROJ-42 to High"
 - "what does the lite tasks API look like" / "show me the schema for X"
 
-## Topic map — load only what you need
+## Topic map — READ the reference for any surface you touch
 
-This SKILL.md covers the orientation. Each focused reference below is loaded on demand:
+**This is not optional.** Each reference file below documents non-obvious wire shapes, validator quirks, and footguns that have already broken real callers. SKILL.md is orientation — it does **not** restate what's in the references. Before you write code that hits an endpoint, **open the matching reference and read the relevant section in full.** Skimming the table is not reading the reference.
 
-| Reference | When to read |
+Rule of thumb: if you're about to construct a request body, set custom-field metadata, choose a `columnIdentifier`, format a date, or pick a label value — **stop and load the reference first.** The footguns are specifically the things you'd guess wrong from training data: labels accept identifiers OR display values (not arbitrary strings); dates need ISO 8601 (PG `timestamptz::text` doesn't qualify); column identifiers in views are `cf_<id>`, not display names; custom-field icons come from `emoji` metadata, not from emoji prefixes in the name.
+
+| Reference | **Must read before** |
 |---|---|
-| [auth.md](references/auth.md) | API key header, scopes, bound workspace via `/v1/api-keys/current` |
-| [errors.md](references/errors.md) | Error envelopes (PM nested vs FR/Wiki flat), error-code vocabulary, rate-limit response, network errors |
-| [tasks.md](references/tasks.md) | `/lite/context`, search, create, update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key`, non-lite TaskCreationRequest, cross-workspace move |
-| [task-types.md](references/task-types.md) | Catalogue, the 9 SYSTEM rows, cascade default (3 levels — list→folder→space, no workspace fallback), single + bulk type changes, default-at-level setters, reassignment-on-delete |
+| [auth.md](references/auth.md) | Sending the first request with a new key, debugging any 401/403, picking scopes |
+| [errors.md](references/errors.md) | Writing any error-handling branch — PM has nested envelopes, FR/Wiki are flat; `validOptions` retry contract |
+| [tasks.md](references/tasks.md) | Any task create/update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key` |
+| [task-types.md](references/task-types.md) | Anything that sets or relies on `taskType` (3-level cascade, no workspace fallback, untyped is valid) |
 | [wiki.md](references/wiki.md) | Wiki pages list/read/write, Markdown vs TipTap, search query syntax |
-| [roadmarq.md](references/roadmarq.md) | Feature requests + bugs, per-board short-ID prefixes, lite verbs (`/votes` not `/vote`, `/moderation` not `/moderate`), `?workspaceIdentifier=` query rule |
-| [webhooks.md](references/webhooks.md) | Subscriptions, payload envelope, `X-Webhook-Signature-256`, retry schedule, WebSocket ticket flow, activity log read shape |
-| [custom-fields.md](references/custom-fields.md) | Custom-field CRUD (lite), value-setting on tasks, formula configuration (structured JSON), rollup configuration (sourceList + aggregator) |
-| [views.md](references/views.md) | Views (Lite): create/list/get/update/clone, column visibility/order, filters, MCP create behavior |
+| [roadmarq.md](references/roadmarq.md) | Feature requests + bugs — short-ID prefixes, lite verbs (`/votes` not `/vote`), `?workspaceIdentifier=` rule |
+| [webhooks.md](references/webhooks.md) | Subscriptions, payload envelope, signature verification, retry schedule, WebSocket ticket flow |
+| [custom-fields.md](references/custom-fields.md) | **MANDATORY for any custom-field work.** Per-type value shapes (labels, dropdown, date, money, file, …), `emoji`/`color` metadata, formula + rollup configs. Skipping this is the #1 cause of silent validation failures and ugly default-icon UI. |
+| [views.md](references/views.md) | **MANDATORY for any view work.** `groupBy`/`sortBy` take column identifiers (`cf_<id>`), not display names. POST creates the view with defaults; columns/filters are a separate PUT. |
 | [dashboards-forms.md](references/dashboards-forms.md) | `/v1/dashboard/lite`, form admin (config + submissions + CSV export), public form submission |
-| [sprints.md](references/sprints.md) | Sprint groups, sprint lifecycle (start/complete/rollover), membership, burndown — non-lite |
-| [imports.md](references/imports.md) | CSV import: preview → confirm flow, one-shot upload, polling job status |
-| [admin.md](references/admin.md) | Plan-quota errors (402 `QUOTA_EXCEEDED`), status / priority / level CRUD per scope, teams, whiteboard collab token |
-| [members.md](references/members.md) | Workspace member list / role / remove, invitations send / cancel / accept / decline |
-| [notifications.md](references/notifications.md) | List + count + mark-read; page-style pagination quirk; `data` is a real JSON object (unlike activity log) |
-| [filters.md](references/filters.md) | Saved filters per list, per user; numeric `Long id`; no "apply saved filter" endpoint on lite search |
+| [sprints.md](references/sprints.md) | Sprint groups, sprint lifecycle, membership, burndown — non-lite endpoint shapes |
+| [imports.md](references/imports.md) | CSV import: preview → confirm flow, polling job status |
+| [admin.md](references/admin.md) | Plan-quota 402, status/priority/level CRUD per scope, teams, whiteboard collab token |
+| [members.md](references/members.md) | Workspace member list/role/remove, invitations |
+| [notifications.md](references/notifications.md) | List + count + mark-read; page-style pagination quirk |
+| [filters.md](references/filters.md) | Saved filters per list, per user; numeric `Long id`; no "apply saved filter" on lite search |
 
-When in doubt, fetch the catalog tag detail first — it's the deployed contract.
+When in doubt, fetch the catalog tag detail first — it's the deployed contract — and **then** read the reference that covers it.
+
+## Pre-flight checklist before any write
+
+Walk this before you start typing the request body. If you can't answer one, the corresponding reference covers it:
+
+1. **Scope** — does the API key have the scope this endpoint requires? Confirm with `GET /v1/api-keys/current`. ([auth.md](references/auth.md))
+2. **Identifiers vs names** — which fields take which? Lite is *enum-ish + people use names; structural references stay as identifiers.* ([SKILL.md "What lite endpoints actually accept"](#what-lite-endpoints-actually-accept))
+3. **Per-type value shapes** — for custom-field values, look up the type in [custom-fields.md](references/custom-fields.md). Date → ISO 8601 (not `2026-05-08 00:00:00+00`). Labels → option display value OR identifier. Money → number or `{amount, currency}`. File/people/task have their own shapes.
+4. **Visual metadata** — for any list, custom-field, or workspace structure you create, set `icon`/`emoji` + `color` at creation time. Skipping them is what produces the "everything is a gray circle" UI. ([SKILL.md "Structure creation defaults"](#structure-creation-defaults))
+5. **View columns** — `groupBy`/`sortBy`/`columnIdentifier` take system field names (`status`, `priority`, `dueDate`) or `cf_<custom-field-identifier>`. **Never** display names. Use `/lite/context` to resolve identifiers. ([views.md](references/views.md))
+6. **Idempotency** — for create endpoints clients may retry, send `Idempotency-Key`. ([tasks.md](references/tasks.md))
 
 ## Core idea: discover, then call
 
@@ -99,7 +112,36 @@ Non-lite tags (e.g. plain `Tasks`) require identifiers everywhere and are mostly
 
 ## Structure creation defaults
 
-When creating a task list via `POST /v1/lists/lite`, prefer setting `icon` and `color` at creation time whenever the list's purpose is known. These are separate visual metadata fields; do not put emoji/icon text into the list name. For `icon`, prefer a semantic emoji name first (`rocket`, `fire`, `direct_hit`, `white_check_mark`, `pushpin`, `moneybag`) and use an icon identifier only when no emoji fits the list's meaning.
+**Set visual metadata at creation time.** Every creatable structure on the Dutify side has a separate `icon`/`emoji` + `color` slot. Leaving these unset doesn't produce a tasteful fallback — it produces the default-by-type icon, which is usually a generic gray circle and looks broken next to user-created content. Whenever you know the semantic purpose of the thing you're creating, fill them in. Don't put emoji or icon text in the name itself.
+
+**Always prefer an emoji over a structural icon.** Emojis carry meaning at a glance (🔥 = severity, 🚀 = launch, 💰 = budget) and match how humans skim a column header. Structural icons (`Hash`, `Stack`, `FlowArrow`) are abstract and look more like a CAD diagram than a label — fall back to them **only** when no emoji name fits the field's semantic purpose.
+
+Look up the valid keys with one HTTP call (the endpoint is `@PermitAll` — no scope check, no workspace binding):
+
+```http
+GET https://dutify.ai/mp/api/v1/custom-field-icon-options
+```
+
+Response shape (`CustomFieldIconOptionsDTO`):
+
+```json
+{
+  "emojiNames":  ["rocket", "fire", "direct_hit", "white_check_mark", "moneybag", "pushpin", "tada", "bulb", "..." ],
+  "iconNames":   ["CalendarBlank", "Hash", "Star", "Wallet", "TagSimple", "FlowArrow", "Stack", "..." ],
+  "defaultIconsByFieldType": {
+    "dropdown": "CaretCircleDown",
+    "labels":   "TagSimple",
+    "date":     "CalendarBlank",
+    "number":   "Hash",
+    "money":    "Wallet",
+    "...":      "..."
+  }
+}
+```
+
+`emojiNames` and `iconNames` are flat lists of accepted string keys (~120 emojis, ~125 icons — same set the in-app picker uses). `defaultIconsByFieldType` is what the frontend falls back to when you leave `emoji` unset — that's where the "everything looks the same" comes from. Pick from `emojiNames` first; only reach into `iconNames` if nothing semantic fits.
+
+**Lists** — `POST /v1/lists/lite` takes `icon` + `color`:
 
 ```json
 {
@@ -111,6 +153,25 @@ When creating a task list via `POST /v1/lists/lite`, prefer setting `icon` and `
   "color": "#4A90D9"
 }
 ```
+
+**Custom fields** — `POST /v1/custom-fields/lite` takes `emoji` + `color`. **This is the one agents miss most.** A column without `emoji` set renders as a default-by-type icon — usually a circle. If you're scripting field creation from a list spec, map each field's semantic purpose to an icon key in the same loop where you set the name:
+
+```json
+{
+  "workspace": "ws_abc",
+  "name": "Severity",
+  "type": "dropdown",
+  "emoji": "fire",
+  "color": "#FF4444",
+  "scope": "list",
+  "scopeName": "Bug List",
+  "options": [{"value": "P1"}, {"value": "P2"}]
+}
+```
+
+Common mappings: severity/urgency → `fire`; target/goal → `direct_hit`; launch/release → `rocket`; approval/done → `white_check_mark`; location → `pushpin`; budget/money → `moneybag`; date/deadline → `calendar` (or icon `CalendarBlank`). When in doubt, read [custom-fields.md](references/custom-fields.md) §"Manage custom-field definitions".
+
+**Spaces / workspaces** — also accept icon + color at create time; see the catalog `Spaces` / `Workspaces` tags.
 
 ## Pagination
 
