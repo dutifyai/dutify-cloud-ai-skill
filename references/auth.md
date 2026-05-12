@@ -24,14 +24,31 @@ Implications:
 
 ## Finding the bound workspace
 
-If the user gives you a key but you don't know which workspace it belongs to:
+If the user gives you a key but you don't know which workspace it belongs to, use the self-introspection endpoint — one call, no probing:
 
 ```http
-GET https://dutify.ai/mp/api/v1/users/current/workspaces
+GET https://dutify.ai/mp/api/v1/api-keys/current
 X-API-Key: dk_live_…
 ```
 
-Returns the user's full workspace list. The one your key works against will be flagged in the response (or you can find out by trying a scoped call and seeing which one doesn't 403). Cache this — it doesn't change often.
+Response (200):
+
+```json
+{
+  "keyIdentifier": "key_…",
+  "keyName": "MCP key for Cursor",
+  "workspaceIdentifier": "ws_…",
+  "workspaceName": "Acme Corp",
+  "scopes": ["tasks:read", "tasks:write", "spaces:read"],
+  "createdByUuid": "…"
+}
+```
+
+This endpoint is **exempt from the scope filter** — even a key with no `workspaces:read` scope can call it, because otherwise scope discovery itself would be impossible. It is the canonical way to answer "what does this key let me do?" in one HTTP call. Cache the result per key (it does not change for the lifetime of the key).
+
+`/v1/api-keys/current` requires API-key authentication. Calling it with a JWT returns `400` — use the `/v1/users/current` family for JWT-context introspection instead.
+
+Avoid the old workaround of listing `/v1/users/current/workspaces` and probing each workspace until one doesn't 403 — `/v1/api-keys/current` replaces it.
 
 ## Workspace identifier vs. name
 

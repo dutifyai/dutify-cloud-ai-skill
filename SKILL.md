@@ -23,7 +23,7 @@ This SKILL.md covers the orientation. Each focused reference below is loaded on 
 
 | Reference | When to read |
 |---|---|
-| [auth.md](references/auth.md) | API key header, scopes, bound workspace, `/v1/users/current/workspaces` |
+| [auth.md](references/auth.md) | API key header, scopes, bound workspace via `/v1/api-keys/current` |
 | [errors.md](references/errors.md) | Error envelopes (PM nested vs FR/Wiki flat), error-code vocabulary, rate-limit response, network errors |
 | [tasks.md](references/tasks.md) | `/lite/context`, search, create, update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key`, non-lite TaskCreationRequest, cross-workspace move |
 | [task-types.md](references/task-types.md) | Catalogue, the 9 SYSTEM rows, cascade default (3 levels — list→folder→space, no workspace fallback), single + bulk type changes, default-at-level setters, reassignment-on-delete |

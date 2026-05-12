@@ -38,7 +38,7 @@ The skill is **topic-indexed** rather than a single big document. `SKILL.md` is 
 | File | Topic |
 |---|---|
 | `SKILL.md` | Orientation: discover→call flow, lite-vs-non-lite, link map, pagination, the worked sprint example |
-| `references/auth.md` | API key header, the 40+ scopes, bound workspace, `/v1/users/current/workspaces` |
+| `references/auth.md` | API key header, the 40+ scopes, bound workspace via `/v1/api-keys/current` |
 | `references/errors.md` | PM nested vs FR/Wiki flat envelopes, error-code vocabulary, rate-limit response, network errors |
 | `references/tasks.md` | `/lite/context`, search, create, update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key`, non-lite `TaskCreationRequest`, cross-workspace move |
 | `references/task-types.md` | Catalogue, the 9 SYSTEM rows, cascade default (3 levels — list→folder→space, no workspace fallback), single + bulk type changes, default-at-level setters, reassignment-on-delete |
