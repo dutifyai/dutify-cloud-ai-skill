@@ -11,8 +11,9 @@ POST   /v1/workspaces/{ws}/webhooks                                 # create sub
 GET    /v1/workspaces/{ws}/webhooks                                 # list subscriptions
 GET    /v1/workspaces/{ws}/webhooks/usage                           # plan-quota usage
 GET    /v1/workspaces/{ws}/webhooks/{webhookIdentifier}             # one subscription
-PATCH  /v1/workspaces/{ws}/webhooks/{webhookIdentifier}             # update url / events / active flag
+PUT    /v1/workspaces/{ws}/webhooks/{webhookIdentifier}             # update url / events / active flag / rotate secret
 DELETE /v1/workspaces/{ws}/webhooks/{webhookIdentifier}
+POST   /v1/workspaces/{ws}/webhooks/{webhookIdentifier}/test        # fire a synthetic test delivery now
 GET    /v1/workspaces/{ws}/webhooks/{webhookIdentifier}/deliveries  # delivery log (cursor-paginated)
 POST   /v1/workspaces/{ws}/webhooks/{id}/deliveries/{deliveryIdentifier}/replay
 ```
@@ -39,6 +40,10 @@ Subscription body:
 `WebhookSubscriptionDTO` (the response on create and on every read) does **not** include `secret` — there's no field for it. So the practical rule is: **keep your own copy at generation time**, because the server will never echo it back.
 
 Rotation: `PUT /v1/workspaces/{ws}/webhooks/{webhookIdentifier}` accepts an optional `secret` field; if you supply a new value, it replaces the stored one. There is no dedicated "regenerate secret" endpoint — rotation is just a PUT with a new client-generated value.
+
+### Validate your setup with a test delivery
+
+`POST /v1/workspaces/{ws}/webhooks/{webhookIdentifier}/test` fires a synthetic delivery to the registered URL immediately, without waiting for a real workspace event. The body is `{"test": true, "message": "This is a test webhook delivery"}` sent as event type `webhook-test`, signed with the same `X-Webhook-Signature-256` HMAC as live deliveries. Use it right after creating a subscription to confirm your endpoint is reachable and your signature-verification code is correct. The response is the resulting delivery record (status, attempt count, timestamps) — also visible in the delivery log.
 
 ## Outgoing webhook payload — what your endpoint receives
 

@@ -1,6 +1,6 @@
 ---
 name: dutify-api
-description: Use the Dutify HTTP "lite" APIs directly. Discover endpoints via the aggregated catalog at https://dutify.ai/mp/api/v1/api-catalog (which spans Project Management, Wiki/Codexum, and Feature Requests/Roadmarq), drill into a tag with /api-catalog/{tag} for full operation + schema detail, then call the endpoint with an X-API-Key header. Use this skill whenever the user wants to query, create, or update Dutify tasks, wiki pages, spaces, lists, feature requests, bugs, comments, sprints, custom fields, or any other Dutify resource — even when they don't say "API" explicitly. Prefer this over guessing endpoints from memory; the catalog is the source of truth.
+description: Use the Dutify HTTP "lite" APIs directly. Discover endpoints via the aggregated catalog at https://dutify.ai/mp/api/v1/api-catalog (which spans Project Management, Wiki/Codexum, and Feature Requests/Roadmarq), drill into a tag with /api-catalog/{tag} for full operation + schema detail, then call the endpoint with an X-API-Key header. Use this skill whenever the user wants to query, create, or update Dutify tasks, wiki pages, spaces, lists, feature requests, bugs, comments, sprints, custom fields, or any other Dutify resource — or to subscribe to events for two-way integration (webhooks push changes to your URL; a WebSocket streams live updates) — even when they don't say "API" explicitly. Prefer this over guessing endpoints from memory; the catalog is the source of truth.
 ---
 
 # Dutify Light API
@@ -16,6 +16,7 @@ The user is asking to do something against a Dutify workspace. Typical signals:
 - "what wiki pages live under the Engineering space"
 - "bump the priority of PROJ-42 to High"
 - "what does the lite tasks API look like" / "show me the schema for X"
+- "notify my service when a task changes" / "set up a webhook" / "stream live updates into X" — push / two-way integration (see [webhooks.md](references/webhooks.md))
 
 ## Topic map — READ the reference for any surface you touch
 
