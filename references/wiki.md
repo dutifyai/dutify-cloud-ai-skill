@@ -39,10 +39,37 @@ There is no DELETE endpoint on the lite tag — page deletion goes through the n
 - `type: "page" | "folder"` on create — folders are organizational nodes that group children but don't carry their own body.
 - `parent: "<parentSlug>"` on create — server resolves the slug to the parent's UUID; null/absent means root-of-space.
 - `template: "<name>"` on create — case-sensitive template name resolved server-side.
-- `isPublic`, `isEditPublic` — null inherits from the space.
-- `icon`, `iconColor` — emoji name or `"icon:<name>"` prefix; hex color.
+- `isPublic`, `isEditPublic` — null inherits from the space. **Note:** these are *internal* visibility flags (who **in the workspace** may view/edit), **not** public-web publishing — see [Publish a space to the public web](#publish-a-space-to-the-public-web).
+- `icon`, `iconColor` — an emoji name (e.g. `rocket`) **or** `"icon:<PhosphorName>"` (e.g. `icon:BookOpen`); `iconColor` is a hex color (icons only, ignored for emoji). Valid names come from the shared Dutify picker (`@dutify/ui`'s `EmojiPickerPopover`); fetch the live list from `GET https://dutify.ai/mp/api/v1/custom-field-icon-options` (no auth) — use an `emojiNames` value bare, or an `iconNames` value with the `icon:` prefix.
 
 Empty pages legitimately have an empty body (depending on requested format: `markdown: ""` or `content: null`/empty doc). Don't treat that as an error.
+
+## Publish a space to the public web
+
+⚠️ **The space's `isPublic` flag does NOT publish to the internet.** `isPublic` is *internal* visibility — it controls whether all workspace members can view the space (vs. members invited explicitly), and it already defaults to `true`. Flipping it changes nothing about a public URL: the public site stays 404 / "Wiki Space Not Found".
+
+Public-web publishing lives in a **separate settings record**, managed via the space-admin `public-settings` endpoints:
+
+```http
+GET https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/public-settings
+PUT https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/public-settings
+GET https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/public-settings/check-slug?slug=my-docs
+```
+
+The two fields that actually serve the public site:
+- **`isEnabled: true`** — the real "publish to the web" switch.
+- **`customSlug`** — the public URL slug; the live site resolves by slug (e.g. `/public/wiki/{customSlug}`). Call `check-slug` first to validate format + uniqueness.
+
+Minimal publish call:
+
+```http
+PUT …/public-settings
+{ "isEnabled": true, "customSlug": "my-docs" }
+```
+
+Other optional `PublicSpaceSettingsDTO` fields: `allowedEmojis` (string[]; `null` = all emojis allowed), `showReactions`, `showPageViews`, `showLastUpdated` (default `true`), `showAuthor`, `viewMode` (`"space"` | `"helpcenter"`), `heroTitle`, `heroSubtitle`.
+
+**Auth:** requires space **admin**. Via API key it resolves to the `wiki:spaces` scope (`wiki:spaces:read` for GET, `wiki:spaces:write` for the PUT).
 
 ## Wiki search — keyword, semantic, or hybrid
 
