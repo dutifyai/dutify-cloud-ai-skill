@@ -71,6 +71,20 @@ Other optional `PublicSpaceSettingsDTO` fields: `allowedEmojis` (string[]; `null
 
 **Auth:** requires space **admin**. Via API key it resolves to the `wiki:spaces` scope (`wiki:spaces:read` for GET, `wiki:spaces:write` for the PUT).
 
+## Share a single page via a public link
+
+Separate from space publishing: any **single page** can be exposed at a secret share URL (anyone with the link can read just that page) without making the whole space public. Agents/API keys may do this — it's scope-gated, not human-only.
+
+```http
+GET    https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/pages/{slug}/share   # status + URL
+POST   https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/pages/{slug}/share   # enable
+PUT    https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/pages/{slug}/share   # change token
+DELETE https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/pages/{slug}/share   # disable / revoke
+GET    https://dutify.ai/api/wiki/v1/workspaces/{wsId}/wiki/spaces/{spaceKey}/pages/share/check-token?token=my-slug
+```
+
+`POST`/`PUT` body (`PublicShareRequest`, both optional): `token` — a custom URL slug, 3-100 chars, lowercase letters/digits/hyphens; auto-generated if omitted; `409` if already taken (use `check-token` first) — and `showAuthor`. Responses are a `PublicShareInfoDTO`: `isEnabled`, `publicToken`, `publicUrl` (the link to give out), `showAuthor`, `sharedAt`, `sharedBy`, `workspaceAllowsSharing` (a workspace admin can disable sharing globally). **Auth:** edit access on the page; API-key scope `wiki:pages:read` (GET) / `wiki:pages:write` (enable/update/disable).
+
 ## Wiki search — keyword, semantic, or hybrid
 
 Tag: **Wiki Search** (lite at `/v1/workspaces/{wsId}/wiki/search/lite`, full at `/v1/workspaces/{wsId}/wiki/search`).
