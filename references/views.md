@@ -50,6 +50,21 @@ The whole thing runs in one transaction on the server. If any part fails — inv
 
 This is true for **both** the direct HTTP path and the MCP `pm_create_view` tool — same single-request contract. (Pre-existing callers that POSTed only structural fields and then PUT columns/filters still work; the PUT path is unchanged.)
 
+### Always select columns — don't ship an empty view
+
+**The single most common mistake here: creating a list (or space/folder) with custom fields, creating a view, and never selecting the columns — so the view renders empty / defaults-only and none of the custom fields show.** A view is only useful if it actually surfaces the fields people care about.
+
+When you create or update a view, **always send `columns`** listing exactly what should be visible, in display order, **including every custom field you want shown**. Omitting `columns` on create falls back to system defaults, so any custom fields you just set up will NOT appear. A column not in the list is hidden.
+
+Workflow whenever you stand up a list / hierarchy entity that has custom fields:
+
+1. Create the list / space / folder.
+2. Create the custom fields (`POST /v1/custom-fields/lite`).
+3. `GET /v1/workspaces/{ws}/lite/context` to read back the **raw** custom-field identifiers now available at that scope.
+4. Create (or update) the view and pass those identifiers in `columns` — alongside the system fields (`title`, `status`, `priority`, …) — so the fields are actually visible.
+
+Don't stop at step 2 or 3. "I created the view" is not done until its columns include the fields the user wants to see.
+
 ## Identifier rules — `groupBy`, `sortBy`, `columnIdentifier`
 
 All three take the **same** form everywhere:

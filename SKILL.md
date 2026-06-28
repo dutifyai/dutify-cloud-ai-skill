@@ -53,7 +53,7 @@ Walk this before you start typing the request body. If you can't answer one, the
 2. **Identifiers vs names** — which fields take which? Lite is *enum-ish + people use names; structural references stay as identifiers.* ([SKILL.md "What lite endpoints actually accept"](#what-lite-endpoints-actually-accept))
 3. **Per-type value shapes** — for custom-field values, look up the type in [custom-fields.md](references/custom-fields.md). Date → ISO 8601 (not `2026-05-08 00:00:00+00`). Labels → option display value OR identifier. Money → number or `{amount, currency}`. File/people/task have their own shapes.
 4. **Visual metadata** — for any list, custom-field, or workspace structure you create, set `icon`/`emoji` + `color` at creation time. Skipping them is what produces the "everything is a gray circle" UI. ([SKILL.md "Structure creation defaults"](#structure-creation-defaults))
-5. **View columns** — `groupBy` / `sortBy` / `columns[].columnIdentifier` all take system field names (`status`, `priority`, `dueDate`, …) or the **raw** custom-field identifier (`AHs6MtrAIq`). **Never** `cf_<id>` and never display names. `columnIdentifier` rejects `cf_<id>` with 400; `groupBy`/`sortBy` silently accept it and then the frontend can't resolve it, so grouping/sorting fails to render. Use `/lite/context` to resolve raw ids. ([views.md](references/views.md))
+5. **View columns — don't ship an empty view.** When you create a view, **always send `columns`** listing what to show, including every custom field you want visible — omit them and the view falls back to defaults and looks empty (the most common mistake here, especially right after creating a list + its custom fields). `groupBy` / `sortBy` / `columns[].columnIdentifier` all take system field names (`status`, `priority`, `dueDate`, …) or the **raw** custom-field identifier (`AHs6MtrAIq`). **Never** `cf_<id>` and never display names. `columnIdentifier` rejects `cf_<id>` with 400; `groupBy`/`sortBy` silently accept it and then the frontend can't resolve it, so grouping/sorting fails to render. Use `/lite/context` to resolve raw ids. ([views.md](references/views.md))
 6. **Idempotency** — for create endpoints clients may retry, send `Idempotency-Key`. ([tasks.md](references/tasks.md))
 
 ## Core idea: discover, then call
@@ -171,6 +171,8 @@ Response shape (`CustomFieldIconOptionsDTO`):
 ```
 
 Common mappings: severity/urgency → `fire`; target/goal → `direct_hit`; launch/release → `rocket`; approval/done → `white_check_mark`; location → `pushpin`; budget/money → `moneybag`; date/deadline → `calendar` (or icon `CalendarBlank`). When in doubt, read [custom-fields.md](references/custom-fields.md) §"Manage custom-field definitions".
+
+**Then make the fields visible — creating them is not enough.** A custom field that isn't in a view's `columns` won't show up anywhere. After creating a list and its custom fields, finish the job by creating (or updating) a view whose `columns` include those fields' raw identifiers, so the user actually sees them. Don't leave a freshly created list with an empty defaults-only view. See [views.md](references/views.md) §"Always select columns — don't ship an empty view".
 
 **Spaces / workspaces** — also accept icon + color at create time; see the catalog `Spaces` / `Workspaces` tags.
 
