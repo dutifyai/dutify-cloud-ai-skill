@@ -44,6 +44,35 @@ There is no DELETE endpoint on the lite tag — page deletion goes through the n
 
 Empty pages legitimately have an empty body (depending on requested format: `markdown: ""` or `content: null`/empty doc). Don't treat that as an error.
 
+## Embedding images in pages
+
+⚠️ **Do NOT embed images as inline `![](data:image/...;base64,…)` data URIs.** The page renderer sizes every image node to its stored `width × height` with `object-fit: fill` (no aspect preservation), so a base64 image whose persisted dimensions aren't proportional renders **squished/distorted** on the public site (and anything wider than the ~660px content column gets crushed). Upload images as attachments instead — that path carries proper dimensions and presigns a real URL.
+
+**Upload flow** (three steps; these are **non-lite** endpoints on the Wiki backend, base `https://dutify.ai/api/wiki`, scope `wiki:attachments:write`):
+
+```http
+POST https://dutify.ai/api/wiki/v1/pages/{pageId}/attachments/upload-url
+{ "filename": "diagram.png", "contentType": "image/png", "sizeBytes": 1048576 }
+# → { "attachmentId": "<uuid>", "uploadUrl": "<presigned R2 PUT url>", "storageKey": "…" }
+
+PUT <uploadUrl>            # raw bytes; Content-Type MUST equal the contentType above
+                          # and Content-Length MUST equal sizeBytes exactly (both are signed)
+
+POST https://dutify.ai/api/wiki/v1/pages/{pageId}/attachments/{attachmentId}/confirm
+# → WikiAttachmentDTO (activates the attachment)
+```
+
+`{pageId}` is the page's **UUID**, not its slug — the lite API only exposes slugs, so resolve it first (e.g. the non-lite pages list, or the page's `pageId` from a non-lite read). Max size 25 MB; system-executable extensions are blocked.
+
+**Reference the attachment from the page body** (TipTap/`content` JSON only — write via `PUT …/pages/lite/{slug}` with `content`). Use an image node with **no `src`**; the renderer presigns the URL from `attachmentId`:
+
+```json
+{ "type": "image", "attrs": { "attachmentId": "<uuid>", "pageId": "<page uuid>",
+                              "width": 660, "height": 372, "align": "center" } }
+```
+
+Keep `width` ≤ ~660 (the content column) and set `height` **proportional** to the real image (`height = width × naturalH / naturalW`) — that's what avoids the `object-fit: fill` distortion. `align` is `left | center | right`.
+
 ## Publish a space to the public web
 
 ⚠️ **The space's `isPublic` flag does NOT publish to the internet.** `isPublic` is *internal* visibility — it controls whether all workspace members can view the space (vs. members invited explicitly), and it already defaults to `true`. Flipping it changes nothing about a public URL: the public site stays 404 / "Wiki Space Not Found".

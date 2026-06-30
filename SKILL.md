@@ -30,7 +30,7 @@ Rule of thumb: if you're about to construct a request body, set custom-field met
 | [errors.md](references/errors.md) | Writing any error-handling branch — PM has nested envelopes, FR/Wiki are flat; `validOptions` retry contract |
 | [tasks.md](references/tasks.md) | Any task create/update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key` |
 | [task-types.md](references/task-types.md) | Anything that sets or relies on `taskType` (3-level cascade, no workspace fallback, untyped is valid) |
-| [wiki.md](references/wiki.md) | Wiki pages list/read/write, Markdown vs TipTap, keyword/semantic/hybrid search, RAG retrieve, reindex |
+| [wiki.md](references/wiki.md) | Wiki pages list/read/write, Markdown vs TipTap, **embedding images (upload as attachments — never base64 data URIs, they render squished)**, keyword/semantic/hybrid search, RAG retrieve, reindex, publish a space, per-page share links |
 | [roadmarq.md](references/roadmarq.md) | Feature requests + bugs — short-ID prefixes, lite verbs (`/votes` not `/vote`), `?workspaceIdentifier=` rule |
 | [webhooks.md](references/webhooks.md) | Subscriptions, payload envelope, signature verification, retry schedule, WebSocket ticket flow |
 | [custom-fields.md](references/custom-fields.md) | **MANDATORY for any custom-field work.** Per-type value shapes (labels, dropdown, date, money, file, …), `emoji`/`color` metadata, formula + rollup configs. Skipping this is the #1 cause of silent validation failures and ugly default-icon UI. |
