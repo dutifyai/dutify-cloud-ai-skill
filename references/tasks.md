@@ -60,6 +60,8 @@ Content-Type: application/json
 
 Returns the new task as a flat `LiteTaskResponse` including its short key (`PROJ-7`) and stable `identifier`. Use the short key in any subsequent reference (comments, relationships, status updates).
 
+> ⚠️ **Mandatory custom fields.** A list can mark custom fields *required*. Populate every field with `isMandatory=true` (surfaced per-field in Context Lite) — the API rejects a create or update that leaves one empty with **HTTP 400 `errorCode: "VALIDATION_ERROR"`**, `details.field` = the field's display name, and a `message` that also names it (e.g. `Mandatory custom field 'Priority' requires a value`). PATCH is validated against the *resulting* task state; non-interactive paths (import/automation/recurring/templates) are exempt. Full detail: [custom-fields.md](custom-fields.md) → "Setting field values on a task".
+
 ### Retry-safety: the `Idempotency-Key` header
 
 `POST /v1/tasks/lite` (and a handful of other create endpoints — folders, spaces) is annotated `@Idempotent`. Pass an `Idempotency-Key: <opaque-string>` header to opt into deduplication.
