@@ -60,7 +60,7 @@ Content-Type: application/json
 
 Returns the new task as a flat `LiteTaskResponse` including its short key (`PROJ-7`) and stable `identifier`. Use the short key in any subsequent reference (comments, relationships, status updates).
 
-> ⚠️ **Mandatory custom fields.** A list can mark custom fields *required*. Populate every field with `isMandatory=true` (surfaced per-field in Context Lite) — the API rejects a create or update that leaves one empty with **HTTP 400 `errorCode: "VALIDATION_ERROR"`**, `details.field` = the field's display name, and a `message` that also names it (e.g. `Mandatory custom field 'Priority' requires a value`). PATCH is validated against the *resulting* task state; non-interactive paths (import/automation/recurring/templates) are exempt. ⏳ Rollout in review via `dutify-pm` (owner: Dutify Cloud) — until it deploys, `details.field`/`isMandatory` may be absent, so fall back to `message` and treat absent `isMandatory` as `false`. Full detail: [custom-fields.md](custom-fields.md) → "Setting field values on a task".
+> ⚠️ **Mandatory custom fields.** A list can mark custom fields *required*. Populate every field with `isMandatory=true` (surfaced per-field in Context Lite) — the API rejects a create or update that leaves one empty with **HTTP 400 `errorCode: "VALIDATION_ERROR"`**, `details.field` = the field's display name, and a `message` that also names it (e.g. `Mandatory custom field 'Priority' requires a value`). PATCH is validated against the *resulting* task state; non-interactive paths (import/automation/recurring/templates) are exempt. Full detail: [custom-fields.md](custom-fields.md) → "Setting field values on a task".
 
 ### Retry-safety: the `Idempotency-Key` header
 
