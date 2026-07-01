@@ -97,6 +97,11 @@ POST https://dutify.ai/mp/api/v1/tasks/lite
 
 Field name → identifier resolution runs against the list's *effective* set (list + folder + space + workspace inheritance, filtered by your access). Values are passed through to the per-type validator unchanged — pass option name strings for dropdowns, numbers for numeric fields, ISO dates for date fields, etc.
 
+> ⚠️ **Mandatory custom fields.** A list can mark custom fields *required/mandatory*. Each custom field in the **Context (Lite)** bundle carries `isMandatory` (boolean) and `isHidden`. Before creating or updating a task, populate every field where `isMandatory=true` for the target list. The API enforces it: a write that leaves a mandatory field empty is rejected with **HTTP 400, `errorCode: "VALIDATION_ERROR"`**, `details.field` = the field's **display name** (not the `cf_…` identifier), and a `message` that also names it (e.g. `Mandatory custom field 'Priority' is required`). Fix and retry — do **not** interrogate the user as a substitute for populating the value.
+> - **Scope:** create **and** update/partialUpdate, validated against the *resulting* task state — a PATCH that doesn't touch a mandatory field passes if the task already satisfies it; a PATCH that *clears* one fails.
+> - **Interactive only:** non-interactive create paths (bulk import, automation/rules, recurring-task generation, templates) are **exempt** and won't reject.
+> - **Rollout:** landing via a `dutify-pm` PR (owner: Dutify Cloud, peer #923). Until it deploys, production may still silently accept a missing mandatory field and omit `isMandatory` — when the flag is absent, treat it as `false`. Once live, rely on `isMandatory` + the 400.
+
 The non-obvious value shapes (the ones agents tend to guess wrong):
 
 - **`labels`** — array of strings (e.g. `"Matched Products": ["Dutify", "Voxor"]`). For a field that **has** predefined options, each string must match an option's `value` (display name) **or** its `identifier` — same lookup rule as `dropdown`. For a field that has **no** predefined options, new labels are auto-created. `[]` clears all. Distinct from the top-level `tags: [...]` field on `POST /v1/tasks/lite` — `tags` are workspace-wide; `labels` is a list/space/workspace-scoped custom field inside `customFields`. Setting `tags` does **not** populate a `Labels` column.
