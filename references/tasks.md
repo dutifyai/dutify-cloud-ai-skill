@@ -28,14 +28,16 @@ The default response is **everything**, which on a large workspace can be heavy.
 
 ## Find tasks by name / status / assignee
 
-Tag: **Search (Lite)**. The endpoint is `GET /v1/tasks/lite/search` (NOT `/v1/tasks/lite` — that path is the create endpoint and per-ref operations). The workspace identifier is the **`workspace`** query parameter (not `workspaceRef`) and is required.
+Tag: **Search (Lite)**. The endpoint is `GET /v1/tasks/lite/search` (NOT `/v1/tasks/lite` — that path is the create endpoint and per-ref operations). The workspace identifier is the **`workspaceIdentifier`** query parameter (the short alias **`workspace`** also works; not `workspaceRef`) and is required.
 
 ```http
-GET https://dutify.ai/mp/api/v1/tasks/lite/search?workspace={wsId}&status=In%20Progress&assignee=alex@dutify.ai
+GET https://dutify.ai/mp/api/v1/tasks/lite/search?workspaceIdentifier={wsId}&status=In%20Progress&assignee=alex@dutify.ai
 X-API-Key: dk_live_…
 ```
 
-Repeatable filters (pass the same key multiple times for OR semantics): `status`, `priority`, `tag`, `taskType`, `assignee`. Other filters: `parent` (key/identifier), `q` (free text over title+description), `space` (name), `list` (identifier), `includeClosed` (default `false`), `includeArchived` (alias for `includeClosed`), `includeSubtasks` (default `true`), `limit` (default 50, max 200), `cursor`.
+> ⚠️ **Lite task endpoints now fail-loud on unknown query params.** A mistyped or undeclared filter name returns **400 `errorCode: "VALIDATION_ERROR"`** naming the offending param — it is no longer silently dropped. (The old silent-drop behaviour was dangerous: a typo'd filter returned the *entire* workspace as if the filter had applied.) So: send only declared params, and double-check spellings. Standardize on `workspaceIdentifier`/`listIdentifier` (self-documenting; `workspace`/`list` remain valid aliases). Note this is scoped to the lite **task** endpoints; scope-based endpoints (views, dashboard) take `scope`/`scopeIdentifier`, never `workspace`.
+
+Repeatable filters (pass the same key multiple times for OR semantics): `status`, `priority`, `tag`, `taskType`, `assignee`. Other filters: `parent` (key/identifier), `q` (free text over title+description), `space` (name), `listIdentifier` (identifier; alias `list`), `includeClosed` (default `false`), `includeArchived` (alias for `includeClosed`), `includeSubtasks` (default `true`), `limit` (default 50, max 200), `cursor`.
 
 Response is a `LitePageResponse<LiteTaskResponse>` — `{items: [...], nextCursor: "..."}`. Each item has the short key (`PROJ-42`) and stable `identifier` (`tsk_…`) — use the short key for further lite calls, the stable identifier when an endpoint requires it (e.g. bulk change-type).
 
