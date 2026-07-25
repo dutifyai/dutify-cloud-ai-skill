@@ -1,6 +1,6 @@
 ---
 name: dutify-api
-version: 2026.07.18
+version: 2026.07.26
 description: Use the Dutify HTTP "lite" APIs directly. Discover endpoints via the aggregated catalog at https://dutify.ai/mp/api/v1/api-catalog (which spans Project Management, Wiki/Codexum, and Feature Requests/Roadmarq), drill into a tag with /api-catalog/{tag} for full operation + schema detail, then call the endpoint with an X-API-Key header. Use this skill whenever the user wants to query, create, or update Dutify tasks, wiki pages, spaces, lists, feature requests, bugs, comments, sprints, custom fields, or any other Dutify resource — or to subscribe to events for two-way integration (webhooks push changes to your URL; a WebSocket streams live updates) — even when they don't say "API" explicitly. Prefer this over guessing endpoints from memory; the catalog is the source of truth.
 ---
 
@@ -12,7 +12,7 @@ Direct HTTP access to the Dutify suite (Project Management, Wiki, Feature Reques
 
 This skill wraps a fast-moving API — **make sure you're on the latest before you rely on it.**
 
-- **Version:** `2026.07.18` — also in the frontmatter `version` and the root [`VERSION`](VERSION) file. Format is CalVer `YYYY.MM.DD`, with an optional `.N` suffix for a second release the same day.
+- **Version:** `2026.07.26` — also in the frontmatter `version` and the root [`VERSION`](VERSION) file. Format is CalVer `YYYY.MM.DD`, with an optional `.N` suffix for a second release the same day.
 - **Canonical source:** https://github.com/dutifyai/dutify-cloud-ai-skill — the GitHub repo's `main` is the latest; this is the distribution copy.
 - **Check for a newer version before version-sensitive work:**
   - *Git clone:* `git -C <skill-dir> pull --ff-only` — or `git fetch` then compare `git rev-parse HEAD` against `git ls-remote origin HEAD`.
