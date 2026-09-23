@@ -1,5 +1,10 @@
 # Authentication
 
+## Account personal keys
+
+`du_live_…` keys work across Hub and the suite. Create/manage them in account settings. Discover workspaces and select one per request using `X-Dutify-Workspace`; see [personal-keys.md](personal-keys.md). The workspace-binding rules below describe existing `dk_live_…` workspace keys. For personal keys, the same boundary applies to the workspace selected for this request.
+
+
 ## The header
 
 Every data-access call needs:
@@ -8,7 +13,7 @@ Every data-access call needs:
 X-API-Key: dk_live_<rest>
 ```
 
-Keys always start with `dk_live_`. If yours doesn't, it's wrong — `dk_test_` keys exist in some environments but production is `dk_live_`.
+Workspace keys start with `dk_live_`; personal keys start with `du_live_` — `dk_test_` keys exist in some environments but production is `dk_live_`.
 
 ## One key, one workspace
 
@@ -44,7 +49,7 @@ Response (200):
 }
 ```
 
-This endpoint is **exempt from the scope filter** — even a key with no `workspaces:read` scope can call it, because otherwise scope discovery itself would be impossible. It is the canonical way to answer "what does this key let me do?" in one HTTP call. Cache the result per key (it does not change for the lifetime of the key).
+This endpoint is **exempt from the scope filter** — even a key with no `workspaces:read` scope can call it, because otherwise scope discovery itself would be impossible. It is the canonical way to answer "what does this key let me do?" in one HTTP call. Refresh permission and scope metadata when needed; keys, scopes, and memberships can change. Never cache a personal-key access decision.
 
 `/v1/api-keys/current` requires API-key authentication. Calling it with a JWT returns `400` — use the `/v1/users/current` family for JWT-context introspection instead.
 

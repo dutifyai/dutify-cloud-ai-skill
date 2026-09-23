@@ -1,6 +1,6 @@
 ---
 name: dutify-api
-version: 2026.07.26.1
+version: 2026.09.23
 description: Use the Dutify HTTP "lite" APIs directly. Discover endpoints via the aggregated catalog at https://dutify.ai/mp/api/v1/api-catalog (which spans Project Management, Wiki/Codexum, and Feature Requests/Roadmarq), drill into a tag with /api-catalog/{tag} for full operation + schema detail, then call the endpoint with an X-API-Key header. Use this skill whenever the user wants to query, create, or update Dutify tasks, wiki pages, spaces, lists, feature requests, bugs, comments, sprints, custom fields, or any other Dutify resource — or to subscribe to events for two-way integration (webhooks push changes to your URL; a WebSocket streams live updates) — even when they don't say "API" explicitly. Prefer this over guessing endpoints from memory; the catalog is the source of truth.
 ---
 
@@ -12,7 +12,7 @@ Direct HTTP access to the Dutify suite (Project Management, Wiki, Feature Reques
 
 This skill wraps a fast-moving API — **make sure you're on the latest before you rely on it.**
 
-- **Version:** `2026.07.26.1` — also in the frontmatter `version` and the root [`VERSION`](VERSION) file. Format is CalVer `YYYY.MM.DD`, with an optional `.N` suffix for a second release the same day.
+- **Version:** `2026.09.23` — also in the frontmatter `version` and the root [`VERSION`](VERSION) file. Format is CalVer `YYYY.MM.DD`, with an optional `.N` suffix for a second release the same day.
 - **Canonical source:** https://github.com/dutifyai/dutify-cloud-ai-skill — the GitHub repo's `main` is the latest; this is the distribution copy.
 - **Check for a newer version before version-sensitive work:**
   - *Git clone:* `git -C <skill-dir> pull --ff-only` — or `git fetch` then compare `git rev-parse HEAD` against `git ls-remote origin HEAD`.
@@ -79,7 +79,7 @@ Three steps for any task:
 
 1. **List tags** — `GET https://dutify.ai/mp/api/v1/api-catalog`. Returns the three services and their tags. Pick the tag closest to what the user wants.
 2. **Get tag detail** — `GET https://dutify.ai/mp/api/v1/api-catalog/{tag}`. URL-encode tag names with spaces or parentheses (`Tasks (Lite)` → `Tasks%20%28Lite%29`). Returns `{tag, description, service, baseUrl, operations[], schemas{}}` — operations have `method`, `path`, `summary`, `description`, `parameters`, `requestBody`, `responses`; schemas resolve `$ref` values.
-3. **Call the endpoint.** Send `X-API-Key: dk_live_…` and (for write endpoints) `Content-Type: application/json`. **Footgun:** the catalog's `path` field is *absolute from the host root* — it already includes the same prefix that's in `baseUrl`. So `path` looks like `/api/wiki/v1/...` and `baseUrl` is `https://dutify.ai/api/wiki`; naive `{baseUrl}{path}` concatenation produces `https://dutify.ai/api/wiki/api/wiki/v1/...` and 404s. Either use `https://dutify.ai` + `path`, or strip the duplicated prefix from `path` before concatenating with `baseUrl`. The `baseUrl` field is mostly informational — telling you which backend the tag lives on, not how to compose the URL.
+3. **Call the endpoint.** Send `X-API-Key: <key>` (and `X-Dutify-Workspace` for personal keys) and (for write endpoints) `Content-Type: application/json`. **Footgun:** the catalog's `path` field is *absolute from the host root* — it already includes the same prefix that's in `baseUrl`. So `path` looks like `/api/wiki/v1/...` and `baseUrl` is `https://dutify.ai/api/wiki`; naive `{baseUrl}{path}` concatenation produces `https://dutify.ai/api/wiki/api/wiki/v1/...` and 404s. Either use `https://dutify.ai` + `path`, or strip the duplicated prefix from `path` before concatenating with `baseUrl`. The `baseUrl` field is mostly informational — telling you which backend the tag lives on, not how to compose the URL.
 
 There's also `GET /api-catalog/detailed` if you want the full thing in one shot, but it's large — prefer the per-tag endpoint when you know the tag.
 
@@ -97,7 +97,9 @@ Always read `baseUrl` from the tag-detail response when composing URLs; don't ha
 
 ## Auth model — quick
 
-Every data-access call needs `X-API-Key: dk_live_<rest>`. Keys are workspace-bound (one key, one workspace) and scope-gated (per resource family — see `auth.md`). The scope filter runs **before** any name resolution, so passing a workspace **name** in a path slot when the key is bound to the workspace **identifier** 403s — always use the identifier in scripts. Full table of scopes + auth failure modes in [auth.md](references/auth.md).
+Send `X-API-Key` on data requests. Existing `dk_live_…` workspace keys remain bound to one workspace. Account personal keys (`du_live_…`) work with both Hub and the suite and inherit the user's current permissions, narrowed by key scopes and workspace policy.
+
+For a personal key, first discover accessible workspaces with `GET https://dutify.ai/mp/api/v1/personal-api-keys/workspaces`, without a workspace header. Set `X-Dutify-Workspace` to the selected canonical identifier on each data request. Resolve ambiguity before writes; never guess a workspace or silently fall back to a different one after denial. Read [personal-keys.md](references/personal-keys.md) for discovery, scopes, limits, and account management. Read [auth.md](references/auth.md) for existing workspace-key behavior.
 
 ## What lite endpoints actually accept
 
@@ -220,9 +222,12 @@ base_url = detail["baseUrl"]
 #    against the key's bound workspace identifier and 403s on mismatch — even if the
 #    name would have resolved to the right workspace under JWT auth.
 WORKSPACE_ID = os.environ["DUTIFY_WORKSPACE_IDENTIFIER"]   # e.g. "ws_abc123"
+HEADERS = {"X-API-Key": API_KEY}
+if API_KEY.startswith("du_live_"):
+    HEADERS["X-Dutify-Workspace"] = WORKSPACE_ID
 ctx = requests.get(
     f"https://dutify.ai/mp/api/v1/workspaces/{WORKSPACE_ID}/lite/context",
-    headers={"X-API-Key": API_KEY},
+    headers=HEADERS,
 ).json()
 list_id = next(
     l["identifier"]
@@ -236,7 +241,7 @@ list_id = next(
 #    base_url with `path` — they overlap.
 resp = requests.post(
     "https://dutify.ai/mp/api/v1/tasks/lite",
-    headers={"X-API-Key": API_KEY, "Content-Type": "application/json"},
+    headers={**HEADERS, "Content-Type": "application/json"},
     json={
         "title": "Write Q4 plan",   # not "name"
         "list": list_id,            # identifier, not "Backlog"
