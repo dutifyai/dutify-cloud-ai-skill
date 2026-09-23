@@ -26,3 +26,5 @@ A personal key consumes one remaining slot in the workspace's API-key count on f
 The server can revoke access at any time. Re-discover as needed; never retain positive authorization decisions across requests. Keep discovery separate from data calls so an unavailable configured default does not prevent selecting another allowed workspace.
 
 Keys created by a personal key inherit an expiry no later than their parent's. An omitted child expiry uses the parent's expiry; a later explicit expiry is rejected. Revoking a parent revokes its descendants. Key-management scopes remain in the full-permission default; read-only keys may list key metadata with `account:api-keys:read` but cannot mint or revoke keys.
+
+Calendar events are account-owned; workspace assignment supplies processing context rather than event ownership. Personal keys can manage the owner’s events across assignments, while recordings remain workspace-restricted.
