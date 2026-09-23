@@ -67,9 +67,9 @@ These are the actual `errorCode` enum values PM emits, not HTTP reason phrases. 
 |---|---|---|---|
 | 400 | `VALIDATION_ERROR` | Validation, bad enum, missing required field, bad input shape | Check `details.field` + `details.validOptions`, retry once |
 | 400 | `OPERATION_NOT_ALLOWED` | Business-logic refusal (e.g. can't delete SYSTEM type, can't move to closed list) | Read `message`; do not blind-retry |
-| 401 | `AUTHENTICATION_FAILED` | Bad / missing key, expired token | Stop — ask the user for a valid `dk_live_…` key |
+| 401 | `AUTHENTICATION_FAILED` | Bad / missing key, expired token | Stop — ask the user for a valid `dk_live_…` workspace key or `du_live_…` personal key |
 | 402 | `QUOTA_EXCEEDED` | Plan limit hit (seats, lists, automations, …) | Surface to user; cannot retry without upgrade |
-| 403 | `ACCESS_DENIED` | Workspace in path ≠ key's bound workspace, or required scope/permission missing | Use the bound workspace identifier; check the key's scopes |
+| 403 | `ACCESS_DENIED` | Workspace in path differs from the personal-key selection or workspace-key binding, or required scope/permission missing | Use the bound workspace identifier; check the key's scopes |
 | 404 | resource-specific (`TASK_NOT_FOUND`, `WORKSPACE_NOT_FOUND`, `TASK_TYPE_NOT_FOUND`, `LIST_NOT_FOUND`, …) | Resource doesn't exist or isn't visible to this key | Verify the identifier; list to confirm |
 | 409 | `ALREADY_EXISTS` / `NAME_ALREADY_EXISTS` | Duplicate name, key, or unique constraint hit | User may want to update instead |
 | 409 | `CONCURRENT_MODIFICATION` | Someone else changed the resource between your fetch and write | Re-fetch and re-apply |
@@ -112,6 +112,18 @@ If the request never gets a response — DNS failure, connection refused, timeou
 ## What to tell the user when something fails
 
 - A typo or bad enum: explain what they typed and what the valid options were. Often you can just retry quietly.
-- An auth failure: explain that the key is invalid or bound to a different workspace, and what they need to provide.
+- An auth failure: distinguish an invalid/expired/revoked key (401) from missing selection (400), workspace capacity (402), and policy/access denial (403). A valid `du_live_` prefix is not an authentication error.
 - A permission failure: name the resource and the access level required.
 - A 5xx: say the backend errored, don't speculate about why.
+
+### Personal-key denials
+
+Personal-key authentication uses a flat `{code, message}` response. Check the status and code before suggesting a different key.
+
+| Status | Code | Action |
+| --- | --- | --- |
+| 400 | `WORKSPACE_REQUIRED` | Discover accessible workspaces and send the selected canonical identifier in `X-Dutify-Workspace`. The key format is valid. |
+| 401 | authentication failure | Check for a missing, invalid, expired, or revoked key, including a revoked or expired delegating parent. Both the product's workspace-key prefix and `du_live_` are supported. |
+| 402 | `PERSONAL_API_KEY_LIMIT_REACHED` | Workspace keys have priority. Ask an administrator to upgrade capacity or disable personal-key access in workspace Security settings; do not switch workspaces to bypass the limit. |
+| 403 | `PERSONAL_API_KEYS_DISABLED` / `PERSONAL_API_KEY_ACCESS_DENIED` / `ACCESS_DENIED` | Check workspace opt-out, current membership, product access, selected workspace, and scopes. Retry only after the relevant condition changes. Downstream products may normalize the code to `PERSONAL_API_KEY_ACCESS_DENIED`. |
+| 503 | `PERSONAL_API_KEY_AUTHORITY_UNAVAILABLE` | Authorization could not reach its authority. Retry a read with bounded backoff; report a persistent outage. Never substitute cached authorization or repeat a mutation whose outcome is unknown. |
