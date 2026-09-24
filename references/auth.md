@@ -1,18 +1,23 @@
 # Authentication
 
+## Account personal keys
+
+`du_live_…` keys work across Hub and the suite. Create/manage them in account settings. Discover workspaces and select one per request using `X-Dutify-Workspace`; see [personal-keys.md](personal-keys.md). The workspace-binding rules below describe existing `dk_live_…` workspace keys. For personal keys, the same boundary applies to the workspace selected for this request.
+
+
 ## The header
 
-Every data-access call needs:
+Every data-access call needs `X-API-Key` with a `dk_live_…` workspace key or a `du_live_…` personal key. Workspace-key example:
 
 ```
 X-API-Key: dk_live_<rest>
 ```
 
-Keys always start with `dk_live_`. If yours doesn't, it's wrong — `dk_test_` keys exist in some environments but production is `dk_live_`.
+Workspace keys start with `dk_live_`; personal keys start with `du_live_` — `dk_test_` keys exist in some environments but production is `dk_live_`.
 
-## One key, one workspace
+## Workspace keys: one key, one workspace
 
-A Dutify API key is bound to exactly one workspace at provisioning time. The backend enforces this with a request-layer filter (`ApiKeyScopeFilter`):
+A `dk_live_…` workspace key is bound to exactly one workspace at provisioning time. The backend enforces this with a request-layer filter (`ApiKeyScopeFilter`):
 
 > Reject any request whose URL contains a workspace identifier different from the key's bound one with `403 ACCESS_DENIED`.
 
@@ -44,7 +49,7 @@ Response (200):
 }
 ```
 
-This endpoint is **exempt from the scope filter** — even a key with no `workspaces:read` scope can call it, because otherwise scope discovery itself would be impossible. It is the canonical way to answer "what does this key let me do?" in one HTTP call. Cache the result per key (it does not change for the lifetime of the key).
+This endpoint is **exempt from the scope filter** — even a key with no `workspaces:read` scope can call it, because otherwise scope discovery itself would be impossible. It is the canonical way to answer "what does this key let me do?" in one HTTP call. Refresh permission and scope metadata when needed; keys, scopes, and memberships can change. Never cache a personal-key access decision.
 
 `/v1/api-keys/current` requires API-key authentication. Calling it with a JWT returns `400` — use the `/v1/users/current` family for JWT-context introspection instead.
 
@@ -71,7 +76,7 @@ X-API-Key: dk_live_…
 
 ## Scopes — the second 403 cause
 
-The API-key scope filter checks **two** things on every call: the bound workspace AND a per-resource scope. A 403 `ACCESS_DENIED` can mean either "wrong workspace in the path" OR "your key has no `tasks:write` scope" — the response message tells you which.
+The API-key scope filter checks **two** things on every call: the selected personal-key workspace (or workspace-key binding) AND a per-resource scope. A 403 `ACCESS_DENIED` can mean either "wrong workspace in the path" OR "your key has no `tasks:write` scope" — the response message tells you which.
 
 Each request is matched to a scope via the URL's most-specific path segment. `GET /v1/tasks/...` needs `tasks:read`; `POST /v1/tasks/lite` needs `tasks:write`; `POST /v1/spaces/lite` needs `spaces:write`; etc. Read methods (`GET`, `HEAD`, `OPTIONS`) check `:read`; everything else (`POST`, `PUT`, `PATCH`, `DELETE`) checks `:write`.
 
@@ -128,8 +133,8 @@ A few endpoints are **hard-denied for API keys regardless of scopes** — `/v1/e
 | Status | PM code | What it means | Fix |
 |---|---|---|---|
 | 401 | (often empty body — Quarkus auth layer) or `AUTHENTICATION_FAILED` | Missing, malformed, or revoked key | Check the header, regenerate the key |
-| 401 | as above | Key doesn't start with `dk_live_` | Wrong environment or typo |
-| 403 | `ACCESS_DENIED` | Key is valid but the workspace in the path isn't the bound one | Use the bound workspace identifier (see `/v1/users/current/workspaces`) |
+| 401 | as above | Key starts with neither `dk_live_` nor `du_live_` | Wrong environment or typo |
+| 403 | `ACCESS_DENIED` | Key is valid but the path differs from the selected workspace or workspace-key binding | Use the bound workspace identifier (see `/v1/users/current/workspaces`) |
 | 403 | `ACCESS_DENIED` | Key is valid and workspace matches, but the key's scopes don't cover this endpoint, OR the user lacks the required permission level | Check the key's scopes; the user may need higher access (VIEW/EDIT/ADMIN) on that resource |
 
 There is no `UNAUTHORIZED` / `FORBIDDEN` / `AMBIGUOUS_WORKSPACE` enum value in PM. Workspace name ambiguity does not surface as an error — the resolver picks the first match silently. The API-key scope filter compares `pathWorkspace.equals(boundWorkspaceIdentifier)` byte-for-byte before any name resolution, so passing a workspace **name** in the path slot when the key is bound to an **identifier** fails the comparison and 403s — even if the name would have resolved to the right workspace.
@@ -137,3 +142,15 @@ There is no `UNAUTHORIZED` / `FORBIDDEN` / `AMBIGUOUS_WORKSPACE` enum value in P
 ## Storing the key
 
 When scripting against the API, read the key from an environment variable (`DUTIFY_API_KEY`) or a secrets store. Never inline it into source files or commit it to git.
+
+### Personal-key denials
+
+Personal-key authentication uses a flat `{code, message}` response. Check the status and code before suggesting a different key.
+
+| Status | Code | Action |
+| --- | --- | --- |
+| 400 | `WORKSPACE_REQUIRED` | Discover accessible workspaces and send the selected canonical identifier in `X-Dutify-Workspace`. The key format is valid. |
+| 401 | authentication failure | Check for a missing, invalid, expired, or revoked key, including a revoked or expired delegating parent. Both the product's workspace-key prefix and `du_live_` are supported. |
+| 402 | `PERSONAL_API_KEY_LIMIT_REACHED` | Workspace keys have priority. Ask an administrator to upgrade capacity or disable personal-key access in workspace Security settings; do not switch workspaces to bypass the limit. |
+| 403 | `PERSONAL_API_KEYS_DISABLED` / `PERSONAL_API_KEY_ACCESS_DENIED` / `ACCESS_DENIED` | Check workspace opt-out, current membership, product access, selected workspace, and scopes. Retry only after the relevant condition changes. Downstream products may normalize the code to `PERSONAL_API_KEY_ACCESS_DENIED`. |
+| 503 | `PERSONAL_API_KEY_AUTHORITY_UNAVAILABLE` | Authorization could not reach its authority. Retry a read with bounded backoff; report a persistent outage. Never substitute cached authorization or repeat a mutation whose outcome is unknown. |
