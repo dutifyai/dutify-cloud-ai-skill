@@ -28,3 +28,7 @@ The server can revoke access at any time. Re-discover as needed; never retain po
 Keys created by a personal key inherit an expiry no later than their parent's. An omitted child expiry uses the parent's expiry; a later explicit expiry is rejected. Revoking a parent revokes its descendants. Key-management scopes remain in the full-permission default; read-only keys may list key metadata with `account:api-keys:read` but cannot mint or revoke keys.
 
 Calendar events are account-owned; workspace assignment supplies processing context rather than event ownership. Personal keys can manage the owner’s events across assignments, while recordings remain workspace-restricted.
+
+Processing assignments must target a workspace the user belongs to. For personal keys, the target must also allow personal-key access and pass current product, scope, revocation, and quota checks. This restriction applies to assigning event/series context and creating a series prompt row; it does not filter account-owned event listings. Publish these instructions together with or after the Calendar target-access fix.
+
+Suite invitation mutations use `suite:invitations:write` and retain the user’s permission checks. This scope does not grant member removal, role/product-access changes, ownership transfer, or general user-settings writes requiring `users:write`. Default personal keys also cannot perform those user-administration writes.
