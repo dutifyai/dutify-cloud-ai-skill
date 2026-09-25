@@ -15,7 +15,7 @@ Read [authentication and routing](references/routing.md) before the first reques
 - `du_live_`: personal key shared across granted products and current accessible workspaces.
 - `dk_live_`: existing Suite key with its fixed workspace and resource restrictions.
 - `dh_live_`: existing Hub key with its fixed workspace and recording visibility.
-- `dw_live_`: one workspace and a named member with explicit product grants; read [workspace integration keys](references/hub/integration-keys.md) and verify deployed support. Issuance may still be disabled.
+- `dw_live_`: one workspace and a named member with explicit product grants; read [workspace integration keys](references/hub/integration-keys.md) and verify deployed support. Issuance is available when contract v1 is deployed.
 - Unknown credential families require a deployed contract.
 
 Send `X-API-Key` from the configured secret source. Personal workspace data calls use `X-Dutify-Workspace`: the Suite identifier for Suite operations and canonical UUID for Hub. Discover candidates first, resolve names, and clarify ambiguous write destinations. Never switch credentials or workspaces as an automatic retry after denial.

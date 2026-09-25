@@ -2,7 +2,7 @@
 
 # dutify-api — Claude Code skill
 
-Version `2026.09.25.1` adds capability-aware guidance for `dw_live_` workspace credentials. Read [integration keys](references/hub/integration-keys.md) before using that family; updating instructions does not enable issuance or deploy the authority/consumers.
+Version `2026.09.25.1` adds capability-aware guidance for `dw_live_` workspace credentials. Read [integration keys](references/hub/integration-keys.md) before using that family; updating instructions does not deploy the authority or consumers. The authority makes issuance available immediately when deployed.
 
 A Claude Code (and Claude.ai) skill that teaches an LLM how to use the Dutify HTTP API directly: discover endpoints via the aggregated catalog at `https://dutify.ai/mp/api/v1/api-catalog`, call the right "lite" tag with an `X-API-Key`, and self-correct on `validOptions` errors instead of guessing endpoint shapes from memory.
 
