@@ -1,8 +1,10 @@
+> This distribution now covers Hub, PM, Wiki and Roadmarq. Existing installations retain the skill name `dutify-api`; Hub-only installations can keep `dutify-hub-api`. Personal `du_live_` keys work across granted products; old workspace keys retain product boundaries. See [routing](references/routing.md) and [connector compatibility](references/connector.md). The combined MCP route is adopted only after its separate release and tool-list verification.
+
 # dutify-api — Claude Code skill
 
 A Claude Code (and Claude.ai) skill that teaches an LLM how to use the Dutify HTTP API directly: discover endpoints via the aggregated catalog at `https://dutify.ai/mp/api/v1/api-catalog`, call the right "lite" tag with an `X-API-Key`, and self-correct on `validOptions` errors instead of guessing endpoint shapes from memory.
 
-**Covers all three Dutify backends** in one skill: Project Management, Wiki/Codexum, and Roadmarq (Feature Requests + Bugs).
+**Covers Hub, Project Management, Wiki/Codexum, and Roadmarq** in one skill. Hub uses its catalog at `https://dutify.ai/api/v1/api-catalog`; the existing Suite catalog aggregates PM, Wiki and Roadmarq.
 
 ## Install
 
@@ -26,18 +28,18 @@ After install:
 
 ```bash
 ls ~/.claude/skills/dutify-api/SKILL.md          # should exist
-ls ~/.claude/skills/dutify-api/references/       # 16 topic files
+ls ~/.claude/skills/dutify-api/references/       # product references
 ```
 
 Then in any Claude Code session, ask "what's the URL for the Dutify task-type catalogue endpoint?" — Claude should pick up the skill, load `references/task-types.md`, and answer.
 
 ## How the skill is laid out
 
-The skill is **topic-indexed** rather than a single big document. `SKILL.md` is the orientation file an LLM always sees; the 16 reference files in `references/` are loaded on-demand based on the topic map.
+The skill is **topic-indexed** rather than a single big document. `SKILL.md` is the orientation file an LLM always sees; the product reference files in `references/` are loaded on-demand based on the topic map.
 
 | File | Topic |
 |---|---|
-| `SKILL.md` | Orientation: discover→call flow, lite-vs-non-lite, link map, pagination, the worked sprint example |
+| `SKILL.md` | All-product routing and topic map; Suite conventions remain in `references/suite-guide.md` |
 | `references/auth.md` | API key header, the 40+ scopes, bound workspace via `/v1/api-keys/current` |
 | `references/errors.md` | PM nested vs FR/Wiki flat envelopes, error-code vocabulary, rate-limit response, network errors |
 | `references/tasks.md` | `/lite/context`, search, create, update, comments, relationships, attachments, recurrence, time entries, `Idempotency-Key`, non-lite `TaskCreationRequest`, cross-workspace move |
@@ -57,11 +59,11 @@ The skill is **topic-indexed** rather than a single big document. `SKILL.md` is 
 
 ## Authentication
 
-Every data-access call needs `X-API-Key` with a `dk_live_…` workspace key or a `du_live_…` account personal key. Create workspace keys in workspace settings and personal keys in account settings. Workspace keys retain their fixed binding; personal keys discover allowed workspaces and select one per call with `X-Dutify-Workspace`. See [authentication](references/auth.md) and [personal keys](references/personal-keys.md) for scopes and denial codes.
+Data-access calls use `X-API-Key`: `du_live_…` for granted products, `dk_live_…` for a Suite workspace, or `dh_live_…` for a Hub workspace. Create workspace keys in workspace settings and personal keys in account settings. Workspace keys retain their fixed binding; personal keys discover allowed workspaces and select one per call with `X-Dutify-Workspace`. See [authentication](references/auth.md) and [personal keys](references/personal-keys.md) for scopes and denial codes.
 
 ## Why a topic-indexed skill rather than one long doc
 
-Skills load fully whenever they're triggered — a 1500-line single doc would burn that much context per task. Splitting orientation in `SKILL.md` and detail per topic means a wiki-only task only loads `wiki.md`; a webhook setup loads `webhooks.md` + `auth.md`; nothing else. SKILL.md is ~165 lines; each reference averages ~95 lines.
+Skills load fully whenever they're triggered — a 1500-line single doc would burn that much context per task. Splitting orientation in `SKILL.md` and detail per topic means a wiki-only task only loads `wiki.md`; a webhook setup loads `webhooks.md` + `auth.md`; nothing else. The entry point is concise; each reference averages ~95 lines.
 
 ## Evaluation
 
@@ -81,3 +83,7 @@ The canonical source for this skill lives at `Dutify-suite/skills/dutify-api/` i
 ## License
 
 Internal Dutify documentation. Use of the API requires a valid Dutify API key.
+
+## Maintaining the Hub compatibility distribution
+
+Canonical Hub references live in `references/hub`. Check copies with `python scripts/sync_hub_references.py --hub-skill <hub-repo>`; use `--write` to export manifest files. The Hub distribution ships complete references and never requires the all-product skill at runtime. Update both distributions and their version files together when shared behavior changes.

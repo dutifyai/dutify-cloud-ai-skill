@@ -30,6 +30,42 @@
       "name": "find-untyped-tasks",
       "prompt": "I want to find every untyped task (tasks with no taskType) across my Dutify workspace 'acme'. Give me a curl command that does this and save it as find_untyped.sh (with #!/bin/bash). API key in $DUTIFY_API_KEY. Also save a short notes.md explaining (1) what 'untyped' means in this system — when a task ends up with taskType=null vs when it inherits a default — and (2) which field on the JSON response I'd filter on to identify the untyped ones if the API itself doesn't expose an isUntyped filter.",
       "files": []
+    },
+    {
+      "id": 5,
+      "name": "legacy-hub-cannot-create-task",
+      "prompt": "I have only a dh_live_ workspace key. Read my call then create a PM task. Do not create credentials or change my connector configuration.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "personal-cross-product-context",
+      "prompt": "Use my configured personal key to read a Hub call, create a PM task, and add a Wiki summary in workspace Acme. Discovery returns distinct UUID and Suite identifier. Save the request plan without performing writes.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "ambiguous-workspace",
+      "prompt": "Two workspaces are named Acme. Use my personal key to create a task in Acme. Explain what selection is still needed without choosing for me.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "catalog-outage",
+      "prompt": "My Suite catalog returns 503 while the Hub catalog responds. Continue a Hub-only read. Do not treat the Suite outage as invalid credentials.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "legacy-suite-installation",
+      "prompt": "My existing Suite connector uses /mcp with a dk_live_ key. Show how to read a task without migrating keys, URLs or tool names.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "partial-cross-product-failure",
+      "prompt": "A PM task was created as TASK-81, then writing the Wiki summary returned 403. Explain the result and the next step without retrying task creation.",
+      "files": []
     }
   ]
 }
