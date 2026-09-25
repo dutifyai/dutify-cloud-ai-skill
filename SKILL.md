@@ -1,6 +1,6 @@
 ---
 name: dutify-api
-version: 2026.09.25.1
+version: 2026.09.25.2
 description: Work with Dutify Hub recordings, calls and Lens, PM tasks and workspaces, Wiki pages, and Roadmarq feedback through the HTTP APIs. Discover the deployed catalog before constructing requests. Use for Dutify queries, changes, event subscriptions, and cross-product workflows; load only relevant product references.
 ---
 
@@ -23,6 +23,8 @@ Send `X-API-Key` from the configured secret source. Personal workspace data call
 Calendar events are account-owned; processing assignment does not change ownership. Read Hub prompt guidance before changing that assignment. Cross-product writes are separately authorized operations: preserve successful results and report a later failure without repeating completed writes.
 
 ## Discover the deployed contract
+
+Prefer the deployed versioned [service-qualified catalog](references/hub/catalog.md) at `/mp/api/v1/integration-catalog`. It keeps PM, Wiki, Roadmarq and Hub tags/schemas separate and reports per-service availability. Omit credentials for this public discovery. Existing catalogs below are compatibility paths only when the new contract is explicitly unsupported.
 
 | Product | Existing catalog |
 | --- | --- |
@@ -58,6 +60,6 @@ For MCP setup, `hub_*` tool names and legacy endpoint compatibility, read [conne
 
 ## Version and distribution
 
-Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.09.25.1` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
+Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.09.25.2` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
 
 Maintainers update frontmatter and `VERSION` together; subsequent releases that day use a `.N` suffix. Hub reference copies are checked/exported with `scripts/sync_hub_references.py`. The existing `dutify-hub-api` distribution remains independently usable.
