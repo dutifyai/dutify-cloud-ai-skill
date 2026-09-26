@@ -1,5 +1,7 @@
 # Authentication
 
+For `dw_live_` credentials, read [workspace integration keys](hub/integration-keys.md). The legacy scope/binding guidance below does not enable their issuance or credential-management access.
+
 ## Account personal keys
 
 `du_live_…` keys work across Hub and the suite. Create/manage them in account settings. Discover workspaces and select one per request using `X-Dutify-Workspace`; see [personal-keys.md](personal-keys.md). The workspace-binding rules below describe existing `dk_live_…` workspace keys. For personal keys, the same boundary applies to the workspace selected for this request.
