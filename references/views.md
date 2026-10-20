@@ -54,16 +54,20 @@ This is true for **both** the direct HTTP path and the MCP `pm_create_view` tool
 
 **The single most common mistake here: creating a list (or space/folder) with custom fields, creating a view, and never selecting the columns — so the view renders empty / defaults-only and none of the custom fields show.** A view is only useful if it actually surfaces the fields people care about.
 
-When you create or update a view, **always send `columns`** listing exactly what should be visible, in display order, **including every custom field you want shown**. Omitting `columns` on create falls back to system defaults, so any custom fields you just set up will NOT appear. A column not in the list is hidden.
+When you create a view or configure its visible fields, **always send `columns`** listing exactly what should be visible, in display order, **including every custom field you want shown**. Omitting `columns` on create falls back to system defaults, so any custom fields you just set up will NOT appear. A column not in the list is hidden. For an unrelated metadata-only update, omit `columns` to preserve the existing layout.
 
-Workflow whenever you stand up a list / hierarchy entity that has custom fields:
+### Finish list setup
 
-1. Create the list / space / folder.
-2. Create the custom fields (`POST /v1/custom-fields/lite`).
-3. `GET /v1/workspaces/{ws}/lite/context` to read back the **raw** custom-field identifiers now available at that scope.
-4. Create (or update) the view and pass those identifiers in `columns` — alongside the system fields (`title`, `status`, `priority`, …) — so the fields are actually visible.
+Apply this finishing pass after creating or importing a list, including when the request does not mention views. Honor an explicitly requested bare list or exact layout.
 
-Don't stop at step 2 or 3. "I created the view" is not done until its columns include the fields the user wants to see.
+1. Inspect the list's effective fields and existing views. Reuse relevant native/inherited fields. Add only useful domain-specific custom fields with suitable types, such as `Budget` (money) or `Channel` (dropdown) for a campaign list; do not create filler fields or duplicate native fields.
+2. Set a semantic list icon and color where supported. For new custom fields, set `emoji` and `color` using the [custom-field icon catalog](custom-fields.md#picking-the-emoji-value); keep names plain. Use a small, coherent palette and meaningful dropdown/label option colors. Preserve shared field metadata outside the requested scope.
+3. Refresh `GET /v1/workspaces/{ws}/lite/context` to obtain the **raw** field identifiers. List the views at the new scope and update its auto-created primary `List` view in place rather than leaving it plain beside a newly styled duplicate.
+4. Send an explicit `columns` list in display order: title first, then the workflow's most useful native and custom fields. Keep the main view focused; hide irrelevant defaults. Choose meaningful grouping (for example, status or channel) and sorting (for example, due date ascending) when useful, using supported field types and raw identifiers. Do not add filters that hide requested records merely for appearance.
+5. Add a board, calendar, or other view only when it helps a distinct workflow. Populate custom-field values from known task/source data; leave unknown values unset.
+6. Read back the saved field metadata and the rich resource-view configuration to verify column membership/order, grouping, sorting, and filters. Lite GET/list responses alone do not expose the saved columns or filters; see the verification note below. If the current connector or permissions prevent verification or an edit, report the specific unfinished part.
+
+Do not stop after creating fields or importing rows. Completion includes a configured primary view with the intended fields visible and their header icons set.
 
 ## Identifier rules — `groupBy`, `sortBy`, `columnIdentifier`
 
