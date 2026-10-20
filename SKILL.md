@@ -1,12 +1,23 @@
 ---
 name: dutify-api
-version: 2026.09.25.2
+version: 2026.10.20.1
 description: Work with Dutify Hub recordings, calls and Lens, PM tasks and workspaces, Wiki pages, and Roadmarq feedback through the HTTP APIs. Discover the deployed catalog before constructing requests. Use for Dutify queries, changes, event subscriptions, and cross-product workflows; load only relevant product references.
 ---
 
 # Dutify API
 
 One HTTP skill for Hub, PM, Wiki, and Roadmarq. Requested resources determine the product; the supplied credential determines authority. Direct HTTP works independently of MCP.
+
+## Finish new lists with a polished view
+
+Creating or importing a list includes configuring its presentation, even when the user does not explicitly ask for views. Unless the user requests a bare list or an exact layout, finish with a useful, visually organized view before reporting completion.
+
+- Read [custom fields](references/custom-fields.md) and the [list finishing workflow](references/views.md#finish-list-setup) before creating a list. Reuse suitable inherited fields; add only purpose-specific fields the workflow needs, with appropriate types. Do not duplicate native status, assignee, or due-date fields.
+- Give the list and newly created fields semantic icons/emojis and a coherent color palette using supported metadata. For column headers, keep field names plain and set the separate `emoji` and `color` properties; choose valid keys from the icon catalog. Color dropdown/label options consistently where supported.
+- Inspect the automatically created views and configure the primary list view in place. Explicitly select and order useful native and custom columns, then choose grouping and sorting that help the user scan or act. Add another view only when it serves a distinct purpose.
+- Verify the saved view configuration and field metadata. A created list, successful import, or populated set of fields alone is not a finished list. Report any permission or API limitation that prevents completing the presentation.
+
+Keep this finishing pass within the requested list: preserve established layouts and shared field metadata elsewhere. Populate only known values; do not invent task data to make the view look full.
 
 ## Authentication and selection
 
@@ -60,6 +71,6 @@ For MCP setup, `hub_*` tool names and legacy endpoint compatibility, read [conne
 
 ## Version and distribution
 
-Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.09.25.2` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
+Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.10.20.1` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
 
 Maintainers update frontmatter and `VERSION` together; subsequent releases that day use a `.N` suffix. Hub reference copies are checked/exported with `scripts/sync_hub_references.py`. The existing `dutify-hub-api` distribution remains independently usable.
