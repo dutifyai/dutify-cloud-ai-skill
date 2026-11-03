@@ -102,6 +102,12 @@
       "name": "issuer-identity",
       "prompt": "The workspace API key page contains a Suite-only key and a Hub-only key with the same ID. I asked to revoke only the Hub key, and the Suite list is unavailable. Explain the target and how to report a successful revoke followed by a refresh failure.",
       "files": []
+    },
+    {
+      "id": 17,
+      "name": "set-default-task-type",
+      "prompt": "In my Dutify workspace 'acme', make Bug the default type for new tasks in the list 'Triage Inbox' (under the 'Engineering' space). Give me the exact HTTP requests in order (method, URL, headers, body), with my API key in $DUTIFY_API_KEY. Save them as answer.md, and include which API-key scopes the key needs and how to undo the change later.",
+      "files": []
     }
   ]
 }

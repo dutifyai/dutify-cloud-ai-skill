@@ -71,6 +71,6 @@ For MCP setup, `hub_*` tool names and legacy endpoint compatibility, read [conne
 
 ## Version and distribution
 
-Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.10.20.1` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
+Canonical source: `https://github.com/dutifyai/dutify-cloud-ai-skill`. Version `2026.11.03.1` also appears in [VERSION](VERSION). For version-sensitive work compare the installed version, canonical release and deployed catalog. Installing instructions does not deploy a backend or connector.
 
 Maintainers update frontmatter and `VERSION` together; subsequent releases that day use a `.N` suffix. Hub reference copies are checked/exported with `scripts/sync_hub_references.py`. The existing `dutify-hub-api` distribution remains independently usable.
