@@ -1,6 +1,6 @@
 ---
 name: dutify-api
-version: 2026.10.20.1
+version: 2026.11.03.1
 description: Work with Dutify Hub recordings, calls and Lens, PM tasks and workspaces, Wiki pages, and Roadmarq feedback through the HTTP APIs. Discover the deployed catalog before constructing requests. Use for Dutify queries, changes, event subscriptions, and cross-product workflows; load only relevant product references.
 ---
 

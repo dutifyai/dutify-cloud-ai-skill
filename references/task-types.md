@@ -47,11 +47,13 @@ PUT https://dutify.ai/mp/api/v1/folders/{folderIdentifier}/default-task-type
 PUT https://dutify.ai/mp/api/v1/lists/{listIdentifier}/default-task-type
 ```
 
-Body is `SetDefaultTaskTypeRequest`:
+Body is `SetDefaultTaskTypeRequest`. It takes the type's generated `identifier` from `GET /v1/workspaces/{wsId}/task-types`, not its name, so to set "Bug" find the row with `name: "Bug"` and send its `identifier`. Success is `204` with no body.
 
 ```json
-{ "taskTypeIdentifier": "tt_bug" }
+{ "taskTypeIdentifier": "<identifier of the Bug row>" }
 ```
+
+**Scopes:** `lists:write`, `folders:write` or `spaces:write` for the level you change, and `workspaces:read` to read the catalogue. `tasks:write` alone returns 403. A key limited to selected hierarchy items can set the default only on items it covers, and can read the catalogue of its own workspace but not change it. The MCP tool `pm_set_default_task_type` does both steps and takes a name.
 
 Pass `taskTypeIdentifier: null` to clear the override at that level (so the level inherits from the next one up).
 
