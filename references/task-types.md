@@ -47,11 +47,13 @@ PUT https://dutify.ai/mp/api/v1/folders/{folderIdentifier}/default-task-type
 PUT https://dutify.ai/mp/api/v1/lists/{listIdentifier}/default-task-type
 ```
 
-Body is `SetDefaultTaskTypeRequest`:
+Body is `SetDefaultTaskTypeRequest`. It takes the type's generated `identifier` from `GET /v1/workspaces/{wsId}/task-types`, not its name, so to set "Bug" find the row with `name: "Bug"` and send its `identifier`. Success is `204` with no body.
 
 ```json
-{ "taskTypeIdentifier": "tt_bug" }
+{ "taskTypeIdentifier": "<identifier of the Bug row>" }
 ```
+
+**Scopes:** `lists:write`, `folders:write` or `spaces:write` for the level you change, and `workspaces:read` to read the catalogue. `tasks:write` alone returns 403. The MCP tool `pm_set_default_task_type` does both steps and takes a name.
 
 Pass `taskTypeIdentifier: null` to clear the override at that level (so the level inherits from the next one up).
 
@@ -80,12 +82,12 @@ Content-Type: application/json
 
 {
   "taskIdentifiers": ["tsk_…", "tsk_…"],
-  "targetTaskTypeIdentifier": "tt_bug",   // or null to clear
+  "targetTaskTypeIdentifier": "<identifier of the Bug row>",   // or null to clear
   "workspaceIdentifier": "ws_…"
 }
 ```
 
-`taskIdentifiers` are **stable identifiers** (`tsk_…`), NOT short keys (`PROJ-42`). The endpoint does not resolve type names — pass the type **identifier** (`tt_…`) you got from the catalogue, or `null` to clear. Sync threshold is 500 (configurable per deployment).
+`taskIdentifiers` are **stable identifiers** (`tsk_…`), NOT short keys (`PROJ-42`). The endpoint does not resolve type names — pass the type's generated **identifier** from the catalogue, or `null` to clear. Sync threshold is 500 (configurable per deployment).
 
 - **Sync 200 response** (`taskIdentifiers.length` ≤ 500): `{processedCount, skippedCount, skippedIdentifiers, targetTaskType, batchId, jobId: null, totalCount: null, statusUrl: null}`. `skippedIdentifiers` is the list of task IDs the user lacked EDIT on; they're counted in `skippedCount` and skipped silently. `batchId` is a UUID matching the audit-log row.
 - **Async 202 response** (>500): `{processedCount: 0, skippedCount, skippedIdentifiers, targetTaskType: null, batchId, jobId, totalCount, statusUrl: "/v1/bulk-jobs/{jobId}"}`. The upfront permission filter still runs synchronously (so `skippedCount` and `skippedIdentifiers` reflect tasks the user can't edit), but `processedCount` only goes up as the async worker finishes — poll `statusUrl` for live counts and terminal status.
@@ -97,12 +99,12 @@ GET https://dutify.ai/mp/api/v1/tasks/lite/search?workspace={wsId}&list=lst_abc&
 # → response.items[].identifier — collect stable identifiers, not short keys
 
 GET https://dutify.ai/mp/api/v1/workspaces/{wsId}/task-types
-# → find the row with name="Bug", read its identifier (e.g. "tt_bug")
+# → find the row with name="Bug" and read its identifier
 
 POST https://dutify.ai/mp/api/v1/tasks/bulk/change-type
-{ "taskIdentifiers": [...], "targetTaskTypeIdentifier": "tt_bug", "workspaceIdentifier": "ws_acme" }
+{ "taskIdentifiers": [...], "targetTaskTypeIdentifier": "<identifier of the Bug row>", "workspaceIdentifier": "ws_acme" }
 ```
 
 ## Deleting a custom task type triggers reassignment, not a hard delete
 
-`DELETE /v1/workspaces/{wsId}/task-types/{taskTypeIdentifier}` always returns `202 Accepted`. It marks the type `reassignStatus: PENDING_REASSIGN` and asynchronously reassigns every assigned task to a target type. Pass the target as the `?reassignTo=tt_…` **query parameter**; omitting it (or blank) defaults to the workspace's `SYSTEM_TASK` row. Poll `GET /v1/workspaces/{wsId}/task-types/{taskTypeIdentifier}/reassignment` for status; once the row is fully reassigned and deleted, that GET returns `404` — that's the terminal "done" signal. SYSTEM types cannot be deleted.
+`DELETE /v1/workspaces/{wsId}/task-types/{taskTypeIdentifier}` always returns `202 Accepted`. It marks the type `reassignStatus: PENDING_REASSIGN` and asynchronously reassigns every assigned task to a target type. Pass the target type's identifier as the `?reassignTo=<identifier>` **query parameter**; omitting it (or blank) defaults to the workspace's `SYSTEM_TASK` row. Poll `GET /v1/workspaces/{wsId}/task-types/{taskTypeIdentifier}/reassignment` for status; once the row is fully reassigned and deleted, that GET returns `404` — that's the terminal "done" signal. SYSTEM types cannot be deleted.
